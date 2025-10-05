@@ -89,8 +89,6 @@ REST_FRAMEWORK = {
     "PAGE_SIZE": 12,
 }
 
-from rest_framework_simplejwt.authentication import JWTAuthentication  # noqa
-
 SIMPLE_JWT = {
     "ACCESS_TOKEN_LIFETIME": timedelta(minutes=60),
     "REFRESH_TOKEN_LIFETIME": timedelta(days=7),

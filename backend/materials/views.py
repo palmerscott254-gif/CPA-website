@@ -20,7 +20,7 @@ class MaterialListView(generics.ListAPIView):
         if unit:
             qs = qs.filter(unit__id=unit)
         if search:
-            qs = qs.filter(Q(title_icontains=search) | Q(description_icontains=search))
+            qs = qs.filter(Q(title__icontains=search) | Q(description__icontains=search))
         sort = self.request.query_params.get("sort")
         if sort == "downloads":
             qs = qs.order_by("-download_count")

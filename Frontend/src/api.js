@@ -1,38 +1,162 @@
 const API_BASE = process.env.REACT_APP_API_BASE || "http://localhost:8000/api";
 
+// Enhanced API utility with better error handling and token management
+export class ApiClient {
+  constructor() {
+    this.baseURL = API_BASE;
+  }
+
+  getAuthHeaders() {
+    const token = localStorage.getItem("access_token");
+    return token ? { Authorization: `Bearer ${token}` } : {};
+  }
+
+  async refreshToken() {
+    const refreshToken = localStorage.getItem("refresh_token");
+    if (!refreshToken) {
+      throw new Error("No refresh token available");
+    }
+
+    try {
+      const response = await fetch(`${this.baseURL}/auth/refresh/`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ refresh: refreshToken }),
+      });
+
+      if (!response.ok) {
+        throw new Error("Token refresh failed");
+      }
+
+      const data = await response.json();
+      localStorage.setItem("access_token", data.access);
+      return data.access;
+    } catch (error) {
+      // Clear tokens on refresh failure
+      localStorage.removeItem("access_token");
+      localStorage.removeItem("refresh_token");
+      throw error;
+    }
+  }
+
+  async request(path, options = {}) {
+    const url = `${this.baseURL}${path}`;
+    const headers = {
+      "Content-Type": "application/json",
+      ...this.getAuthHeaders(),
+      ...(options.headers || {}),
+    };
+
+    let response;
+    try {
+      response = await fetch(url, {
+        ...options,
+        headers,
+      });
+
+      // If unauthorized and we have a refresh token, try to refresh
+      if (response.status === 401 && localStorage.getItem("refresh_token")) {
+        try {
+          await this.refreshToken();
+          // Retry the request with new token
+          headers.Authorization = `Bearer ${localStorage.getItem("access_token")}`;
+          response = await fetch(url, {
+            ...options,
+            headers,
+          });
+        } catch (refreshError) {
+          // Redirect to login if refresh fails
+          window.location.href = "/login";
+          throw refreshError;
+        }
+      }
+
+      const data = await response.json().catch(() => null);
+      
+      if (!response.ok) {
+        throw { 
+          status: response.status, 
+          data,
+          message: data?.detail || `HTTP ${response.status} Error`
+        };
+      }
+
+      return data;
+    } catch (error) {
+      if (error.status) {
+        throw error;
+      }
+      throw {
+        status: 0,
+        data: null,
+        message: "Network error - please check your connection"
+      };
+    }
+  }
+
+  async get(path, options = {}) {
+    return this.request(path, { ...options, method: "GET" });
+  }
+
+  async post(path, data, options = {}) {
+    return this.request(path, {
+      ...options,
+      method: "POST",
+      body: JSON.stringify(data),
+    });
+  }
+
+  async put(path, data, options = {}) {
+    return this.request(path, {
+      ...options,
+      method: "PUT",
+      body: JSON.stringify(data),
+    });
+  }
+
+  async delete(path, options = {}) {
+    return this.request(path, { ...options, method: "DELETE" });
+  }
+}
+
+// Create a singleton instance
+const apiClient = new ApiClient();
+
+// Legacy functions for backward compatibility
 export async function fetchJSON(path, opts = {}) {
-  const res = await fetch(`${API_BASE}${path}`, {
-    headers: { "Content-Type": "application/json", ...(opts.headers || {}) },
-    ...opts,
-  });
-  const data = await res.json().catch(() => null);
-  if (!res.ok) throw { status: res.status, data };
-  return data;
+  return apiClient.request(path, opts);
 }
 
 export function downloadFile(path, token) {
   const url = `${API_BASE}${path}`;
   const headers = token ? { Authorization: `Bearer ${token}` } : {};
-  // open in new tab to trigger download (handled by backend)
-  const a = document.createElement("a");
-  a.href = url;
-  Object.keys(headers).forEach(k => a.setAttribute(k, headers[k]));
-  // can't set headers on simple <a>; instead open via fetch and blob
+  
   return fetch(url, { headers })
-    .then(r => {
-      if (!r.ok) throw new Error("Download failed");
-      return r.blob();
+    .then(response => {
+      if (!response.ok) {
+        throw new Error(`Download failed: ${response.status}`);
+      }
+      return response.blob();
     })
     .then(blob => {
       const blobUrl = window.URL.createObjectURL(blob);
       const link = document.createElement("a");
       link.href = blobUrl;
-      // try to derive filename
-      const disposition = "";
-      link.download = path.split("/").pop() || "download.pdf";
+      
+      // Extract filename from path or use default
+      const filename = path.split("/").pop() || "download.pdf";
+      link.download = filename;
+      
       document.body.appendChild(link);
       link.click();
       link.remove();
       window.URL.revokeObjectURL(blobUrl);
+    })
+    .catch(error => {
+      console.error("Download error:", error);
+      throw error;
     });
 }
+
+// Export the API client for new code
+export default apiClient;

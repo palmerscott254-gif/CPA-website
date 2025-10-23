@@ -6,6 +6,29 @@ from django.shortcuts import get_object_or_404
 from rest_framework.views import APIView
 from django.utils import timezone
 
+class QuizRootView(APIView):
+    permission_classes = [permissions.AllowAny]
+    
+    def get(self, request):
+        return Response({
+            "message": "CPA Academy Quiz API",
+            "endpoints": {
+                "question_sets": "GET /api/quizzes/sets/<id>/",
+                "quiz_attempts": "POST /api/quizzes/attempts/"
+            },
+            "usage": {
+                "question_sets": {
+                    "method": "GET",
+                    "description": "Get a specific question set with questions"
+                },
+                "quiz_attempts": {
+                    "method": "POST",
+                    "fields": ["question_set", "answers"],
+                    "description": "Submit quiz answers and get score"
+                }
+            }
+        })
+
 class QuestionSetDetailView(generics.RetrieveAPIView):
     queryset = QuestionSet.objects.all()
     serializer_class = QuestionSetSerializer

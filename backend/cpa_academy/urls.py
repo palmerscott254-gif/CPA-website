@@ -5,7 +5,7 @@ from django.conf.urls.static import static
 from django.http import JsonResponse
 
 # Import admin configuration to apply custom headers and titles
-from . import admin
+from . import custom_admin
 
 def api_root(request):
     return JsonResponse({

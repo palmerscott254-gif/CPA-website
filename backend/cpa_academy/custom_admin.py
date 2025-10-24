@@ -32,8 +32,8 @@ class UnitAdmin(admin.ModelAdmin):
 
 @admin.register(Material)
 class MaterialAdmin(admin.ModelAdmin):
-    list_display = ('title', 'unit', 'uploaded_by', 'upload_date', 'download_count', 'is_public')
-    list_filter = ('is_public', 'upload_date', 'unit__subject')
+    list_display = ('title', 'unit', 'file_type', 'uploaded_by', 'upload_date', 'download_count', 'is_public')
+    list_filter = ('is_public', 'file_type', 'upload_date', 'unit__subject')
     search_fields = ('title', 'description')
     ordering = ('-upload_date',)
 

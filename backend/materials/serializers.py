@@ -9,5 +9,5 @@ class MaterialSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Material
-        fields = ("id","unit","unit_id","title","description","file","uploaded_by","upload_date","tags","is_public","download_count")
-        read_only_fields = ("uploaded_by","download_count","upload_date")
+        fields = ("id","unit","unit_id","title","description","file","file_type","uploaded_by","upload_date","tags","is_public","download_count")
+        read_only_fields = ("uploaded_by","download_count","upload_date","file_type")

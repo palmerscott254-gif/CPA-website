@@ -37,10 +37,11 @@ class MaterialCreateView(generics.CreateAPIView):
         uploaded_file = self.request.FILES.get("file")
         if uploaded_file:
             ext = uploaded_file.name.split(".")[-1].lower()
-            if ext != "pdf":
-                raise serializers.ValidationError({"file": "Only PDF files are allowed."})
-            if uploaded_file.size > 20 * 1024 * 1024:
-                raise serializers.ValidationError({"file": "Max size 20MB."})
+            allowed_extensions = ["pdf", "doc", "docx", "ppt", "pptx", "mp4", "avi", "mov"]
+            if ext not in allowed_extensions:
+                raise serializers.ValidationError({"file": f"Only {', '.join(allowed_extensions)} files are allowed."})
+            if uploaded_file.size > 50 * 1024 * 1024:  # 50MB limit
+                raise serializers.ValidationError({"file": "Max size 50MB."})
         serializer.save(uploaded_by=user)
 
 

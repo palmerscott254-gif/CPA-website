@@ -13,11 +13,16 @@ class QuizRootView(APIView):
         return Response({
             "message": "CPA Academy Quiz API",
             "endpoints": {
-                "question_sets": "GET /api/quizzes/sets/<id>/",
+                "question_sets": "GET /api/quizzes/sets/",
+                "question_set_detail": "GET /api/quizzes/sets/<id>/",
                 "quiz_attempts": "POST /api/quizzes/attempts/"
             },
             "usage": {
                 "question_sets": {
+                    "method": "GET",
+                    "description": "List all question sets"
+                },
+                "question_set_detail": {
                     "method": "GET",
                     "description": "Get a specific question set with questions"
                 },
@@ -28,6 +33,11 @@ class QuizRootView(APIView):
                 }
             }
         })
+
+class QuestionSetListView(generics.ListAPIView):
+    queryset = QuestionSet.objects.all()
+    serializer_class = QuestionSetSerializer
+    permission_classes = [permissions.AllowAny]
 
 class QuestionSetDetailView(generics.RetrieveAPIView):
     queryset = QuestionSet.objects.all()

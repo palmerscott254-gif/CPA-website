@@ -4,6 +4,9 @@ from django.conf import settings
 from django.conf.urls.static import static
 from django.http import JsonResponse
 
+# Import admin configuration to apply custom headers and titles
+from . import admin
+
 def api_root(request):
     return JsonResponse({
         "message": "CPA Academy API",

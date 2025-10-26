@@ -11,7 +11,10 @@ import {
   HelpCircle, 
   User,
   LogOut,
-  ChevronDown
+  ChevronDown,
+  Home,
+  Target,
+  Mail
 } from "lucide-react";
 import { useTheme } from "../contexts/ThemeContext";
 import { fetchJSON } from "../api";
@@ -62,9 +65,12 @@ const NavBar = () => {
   };
 
   const navItems = [
+    { name: "Home", path: "/", icon: Home },
     { name: "Units", path: "/units", icon: BookOpen },
     { name: "Materials", path: "/materials", icon: FileText },
     { name: "Quizzes", path: "/quizzes", icon: HelpCircle },
+    { name: "Missions", path: "/missions", icon: Target },
+    { name: "Contact Support", path: "/contact", icon: Mail },
   ];
 
   const isActive = (path) => location.pathname === path;
@@ -81,10 +87,26 @@ const NavBar = () => {
     >
       <div className="container-modern">
         <div className="flex items-center justify-between h-16 lg:h-20">
-          {/* Logo */}
+          {/* Hamburger Menu Button - Left Side */}
+          <motion.button
+            whileHover={{ scale: 1.1 }}
+            whileTap={{ scale: 0.9 }}
+            onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+            className="p-2 rounded-xl bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700 transition-all duration-300 focus-ring"
+            aria-label="Toggle menu"
+          >
+            {isMobileMenuOpen ? (
+              <X className="w-6 h-6" />
+            ) : (
+              <Menu className="w-6 h-6" />
+            )}
+          </motion.button>
+
+          {/* Logo - Center */}
           <motion.div
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
+            className="absolute left-1/2 transform -translate-x-1/2 hidden sm:block"
           >
             <Link
               to="/"
@@ -95,31 +117,20 @@ const NavBar = () => {
             </Link>
           </motion.div>
 
-          {/* Desktop Navigation */}
-          <div className="hidden lg:flex items-center space-x-1">
-            {navItems.map((item) => {
-              const Icon = item.icon;
-              return (
-                <motion.div
-                  key={item.name}
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.95 }}
-                >
-                  <Link
-                    to={item.path}
-                    className={`flex items-center space-x-2 px-4 py-2 rounded-xl transition-all duration-300 ${
-                      isActive(item.path)
-                        ? "bg-primary-100 dark:bg-primary-900/30 text-primary-700 dark:text-primary-300"
-                        : "text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 hover:text-primary-600 dark:hover:text-primary-400"
-                    }`}
-                  >
-                    <Icon className="w-4 h-4" />
-                    <span className="font-medium">{item.name}</span>
-                  </Link>
-                </motion.div>
-              );
-            })}
-          </div>
+          {/* Logo - Left for mobile */}
+          <motion.div
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+            className="sm:hidden ml-4"
+          >
+            <Link
+              to="/"
+              className="flex items-center space-x-2 text-xl font-bold text-gradient"
+            >
+              <BookOpen className="w-6 h-6 text-primary-600" />
+              <span>CPA Academy</span>
+            </Link>
+          </motion.div>
 
           {/* Right Side Actions */}
           <div className="flex items-center space-x-4">
@@ -175,7 +186,7 @@ const NavBar = () => {
                 </AnimatePresence>
               </div>
             ) : (
-              <div className="hidden lg:flex items-center space-x-3">
+              <div className="hidden sm:flex items-center space-x-3">
                 <Link
                   to="/login"
                   className="btn-ghost"
@@ -190,25 +201,10 @@ const NavBar = () => {
                 </Link>
               </div>
             )}
-
-            {/* Mobile Menu Button */}
-            <motion.button
-              whileHover={{ scale: 1.1 }}
-              whileTap={{ scale: 0.9 }}
-              onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-              className="lg:hidden p-2 rounded-xl bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700 transition-all duration-300 focus-ring"
-              aria-label="Toggle mobile menu"
-            >
-              {isMobileMenuOpen ? (
-                <X className="w-6 h-6" />
-              ) : (
-                <Menu className="w-6 h-6" />
-              )}
-            </motion.button>
           </div>
         </div>
 
-        {/* Mobile Menu */}
+        {/* Hamburger Menu */}
         <AnimatePresence>
           {isMobileMenuOpen && (
             <motion.div
@@ -216,7 +212,7 @@ const NavBar = () => {
               animate={{ opacity: 1, height: "auto" }}
               exit={{ opacity: 0, height: 0 }}
               transition={{ duration: 0.3 }}
-              className="lg:hidden bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700"
+              className="bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700"
             >
               <div className="py-4 space-y-2">
                 {navItems.map((item) => {

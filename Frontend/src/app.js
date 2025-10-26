@@ -9,7 +9,10 @@ import Materials from "./pages/materials";
 import Quizzes from "./pages/quizzes";
 import Login from "./pages/login";
 import Register from "./pages/register";
+import Contact from "./pages/contact";
+import Missions from "./pages/missions";
 import NavBar from "./Components/NavBar";
+import Footer from "./Components/Footer";
 
 const pageVariants = {
   initial: { opacity: 0, y: 20 },
@@ -106,8 +109,26 @@ export default function App() {
                 </PageWrapper>
               } 
             />
+            <Route 
+              path="/contact" 
+              element={
+                <PageWrapper>
+                  <Contact />
+                </PageWrapper>
+              } 
+            />
+            <Route 
+              path="/missions" 
+              element={
+                <PageWrapper>
+                  <Missions />
+                </PageWrapper>
+              } 
+            />
           </Routes>
         </main>
+        
+        <Footer />
       </div>
     </Router>
   );

@@ -165,22 +165,7 @@ const Home = () => {
               Access structured units, practice materials, and track your progress.
             </motion.p>
 
-            <motion.div
-              variants={itemVariants}
-              className="flex flex-col sm:flex-row gap-4 justify-center items-center mb-12"
-            >
-              <Link
-                to="/units"
-                className="group btn-primary text-lg px-8 py-4 inline-flex items-center"
-              >
-                Start Learning
-                <ArrowRight className="w-5 h-5 ml-2 group-hover:translate-x-1 transition-transform" />
-              </Link>
-              <button className="group btn-secondary text-lg px-8 py-4 inline-flex items-center">
-                <Play className="w-5 h-5 mr-2 group-hover:scale-110 transition-transform" />
-                Watch Demo
-              </button>
-            </motion.div>
+            {/* Buttons removed as per requirements */}
 
             {/* Stats */}
             <motion.div
@@ -260,6 +245,42 @@ const Home = () => {
                 </motion.div>
               );
             })}
+          </motion.div>
+        </div>
+      </section>
+
+      {/* Mission & Aim Section */}
+      <section className="section-padding bg-gradient-to-br from-primary-50 via-white to-accent-50 dark:from-gray-800 dark:via-gray-900 dark:to-gray-800">
+        <div className="container-modern">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6 }}
+            viewport={{ once: true }}
+            className="max-w-4xl mx-auto text-center"
+          >
+            <h2 className="text-4xl md:text-5xl font-bold text-gray-900 dark:text-white mb-6">
+              Our Mission & Aim
+            </h2>
+            <div className="space-y-6 text-lg text-gray-700 dark:text-gray-300 leading-relaxed">
+              <p>
+                At CPA Academy, our mission is to democratize CPA education by making high-quality learning 
+                resources accessible to every aspiring accountant. We believe that financial knowledge and 
+                professional certification should be within reach for all students, regardless of their 
+                background or location.
+              </p>
+              <p>
+                We aim to bridge the gap between traditional learning and modern education technology by 
+                providing comprehensive study materials, interactive quizzes, and structured learning paths 
+                that adapt to each student's pace. Our platform is designed to support you throughout your 
+                entire CPA journey, from foundational concepts to advanced exam preparation.
+              </p>
+              <p>
+                Through continuous innovation and dedication to educational excellence, we strive to empower 
+                students with the knowledge, confidence, and skills needed to excel in their CPA examinations 
+                and build successful careers in accounting and finance.
+              </p>
+            </div>
           </motion.div>
         </div>
       </section>

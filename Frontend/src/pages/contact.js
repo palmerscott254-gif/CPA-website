@@ -53,7 +53,7 @@ const Contact = () => {
     {
       icon: Phone,
       title: "Phone",
-      description: "+1 (555) 123-4567",
+      description: "+254 114 110791",
       details: "Mon-Fri 9AM-5PM EST"
     },
     {
@@ -182,7 +182,7 @@ const Contact = () => {
                     onChange={handleChange}
                     required
                     className="form-input"
-                    placeholder="John Doe"
+                    placeholder="N Scott"
                   />
                 </div>
 
@@ -198,7 +198,7 @@ const Contact = () => {
                     onChange={handleChange}
                     required
                     className="form-input"
-                    placeholder="john@example.com"
+                    placeholder="scott@example.com"
                   />
                 </div>
 

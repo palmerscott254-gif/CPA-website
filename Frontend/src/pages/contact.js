@@ -29,7 +29,7 @@ const Contact = () => {
   const handleSubmit = (e) => {
     e.preventDefault();
     // Here you would typically send the form data to your backend
-    console.log("Form submitted:", formData);
+    // Example: await fetchJSON("/contact/submit/", { method: "POST", body: JSON.stringify(formData) });
     setSubmitted(true);
     setTimeout(() => {
       setSubmitted(false);

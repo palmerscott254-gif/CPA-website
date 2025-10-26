@@ -12,7 +12,6 @@ import {
   Award,
   TrendingUp,
   CheckCircle,
-  Play,
   Sparkles
 } from "lucide-react";
 import { fetchJSON } from "../api";

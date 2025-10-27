@@ -18,6 +18,7 @@ import {
 } from "lucide-react";
 import { useTheme } from "../contexts/ThemeContext";
 import { fetchJSON } from "../api";
+import { logger } from "../utils/logger";
 
 const NavBar = () => {
   const [user, setUser] = useState(null);
@@ -51,7 +52,7 @@ const NavBar = () => {
       const userData = await fetchJSON("/auth/user/");
       setUser(userData);
     } catch (error) {
-      console.error("Error fetching user info:", error);
+      logger.error("Error fetching user info:", error);
     }
   };
 

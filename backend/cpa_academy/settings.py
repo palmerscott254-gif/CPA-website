@@ -108,10 +108,11 @@ SIMPLE_JWT = {
 
 # CORS settings
 CORS_ALLOWED_ORIGINS = [
+    # Development
     "http://localhost:3000",
     "http://127.0.0.1:3000",
-    "https://cpa-website-qbf3-git-main-palmerscott254-gifs-projects.vercel.app",
-    # Add your production Vercel domain here if different
+    # Production - Render Frontend
+    "https://cpa-website-1.onrender.com",
 ]
 
 # Allow environment variable to add more origins
@@ -131,4 +132,14 @@ CORS_ALLOW_HEADERS = [
     'user-agent',
     'x-csrftoken',
     'x-requested-with',
+]
+
+# Additional CORS settings for better compatibility
+CORS_ALLOW_METHODS = [
+    'DELETE',
+    'GET',
+    'OPTIONS',
+    'PATCH',
+    'POST',
+    'PUT',
 ]

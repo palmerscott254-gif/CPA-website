@@ -14,6 +14,7 @@ import {
   Sparkles
 } from "lucide-react";
 import { fetchJSON } from "../api";
+import { logger } from "../utils/logger";
 
 const Home = () => {
   const [subjects, setSubjects] = useState([]);
@@ -42,7 +43,7 @@ const Home = () => {
         setLoading(false);
       })
       .catch(err => {
-        console.error("Error fetching subjects:", err);
+        logger.error("Error fetching subjects:", err);
         setError("Failed to load subjects");
         setLoading(false);
       });

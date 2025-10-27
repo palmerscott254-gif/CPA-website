@@ -15,6 +15,7 @@ import {
   PlayCircle
 } from "lucide-react";
 import { fetchJSON } from "../api";
+import { logger } from "../utils/logger";
 
 const Units = () => {
   const [units, setUnits] = useState([]);
@@ -42,7 +43,7 @@ const Units = () => {
         setLoading(false);
       })
       .catch(err => {
-        console.error("Error fetching units:", err);
+        logger.error("Error fetching units:", err);
         setError("Failed to load units");
         setLoading(false);
       });

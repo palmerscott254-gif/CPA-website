@@ -14,6 +14,7 @@ import {
   ArrowRight
 } from "lucide-react";
 import { fetchJSON, downloadFile } from "../api";
+import { logger } from "../utils/logger";
 
 const UnitDetail = () => {
   const { id } = useParams();
@@ -49,7 +50,7 @@ const UnitDetail = () => {
       setLoading(false);
     })
     .catch(err => {
-      console.error("Error fetching data:", err);
+      logger.error("Error fetching data:", err);
       setError("Failed to load unit details");
       setLoading(false);
     });
@@ -63,7 +64,7 @@ const UnitDetail = () => {
       await downloadFile(`/materials/${material.id}/download/`, token);
     } catch (err) {
       alert("Download failed. Please make sure you're logged in.");
-      console.error("Download error:", err);
+      logger.error("Download error:", err);
     } finally {
       setDownloading(null);
     }

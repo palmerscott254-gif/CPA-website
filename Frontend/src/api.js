@@ -151,7 +151,7 @@ export function downloadFile(path, token) {
       window.URL.revokeObjectURL(blobUrl);
     })
     .catch(error => {
-      console.error("Download error:", error);
+      // Error is thrown to be handled by caller
       throw error;
     });
 }

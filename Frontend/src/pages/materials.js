@@ -16,6 +16,7 @@ import {
   AlertCircle
 } from "lucide-react";
 import { fetchJSON, downloadFile } from "../api";
+import { logger } from "../utils/logger";
 
 const Materials = () => {
   const [materials, setMaterials] = useState([]);
@@ -55,7 +56,7 @@ const Materials = () => {
         setLoading(false);
       })
       .catch(err => {
-        console.error("Error fetching materials:", err);
+        logger.error("Error fetching materials:", err);
         setError("Failed to load materials");
         setLoading(false);
       });
@@ -70,7 +71,7 @@ const Materials = () => {
       // Show success message or update download count
     } catch (err) {
       alert("Download failed. Please make sure you're logged in.");
-      console.error("Download error:", err);
+      logger.error("Download error:", err);
     } finally {
       setDownloading(null);
     }

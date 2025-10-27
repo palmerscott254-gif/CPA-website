@@ -9,26 +9,21 @@ import {
   Star, 
   Users,
   ArrowRight,
-  Filter,
   Grid,
   List,
   CheckCircle,
   PlayCircle,
-  Trophy,
   Target,
   BookOpen,
-  TrendingUp,
-  Award,
   Brain,
   Timer,
   RefreshCw
 } from "lucide-react";
-import { fetchJSON } from "../api";
 
 const Quizzes = () => {
   const [questionSets, setQuestionSets] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
+  const [error] = useState(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [sortBy, setSortBy] = useState("title");
   const [viewMode, setViewMode] = useState("grid");

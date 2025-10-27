@@ -8,18 +8,10 @@ import {
   FileText, 
   Download, 
   Calendar, 
-  Clock, 
-  Users,
   Star,
-  PlayCircle,
   HelpCircle,
-  CheckCircle,
   AlertCircle,
-  ArrowRight,
-  Eye,
-  Award,
-  Target,
-  TrendingUp
+  ArrowRight
 } from "lucide-react";
 import { fetchJSON, downloadFile } from "../api";
 

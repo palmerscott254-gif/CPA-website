@@ -9,8 +9,6 @@ import {
   Clock, 
   Star, 
   Users,
-  ArrowRight,
-  Filter,
   Grid,
   List,
   CheckCircle,

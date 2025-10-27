@@ -74,11 +74,10 @@ export class ApiClient {
       const data = await response.json().catch(() => null);
       
       if (!response.ok) {
-        throw { 
-          status: response.status, 
-          data,
-          message: data?.detail || `HTTP ${response.status} Error`
-        };
+        const error = new Error(data?.detail || `HTTP ${response.status} Error`);
+        error.status = response.status;
+        error.data = data;
+        throw error;
       }
 
       return data;
@@ -86,11 +85,10 @@ export class ApiClient {
       if (error.status) {
         throw error;
       }
-      throw {
-        status: 0,
-        data: null,
-        message: "Network error - please check your connection"
-      };
+      const networkError = new Error("Network error - please check your connection");
+      networkError.status = 0;
+      networkError.data = null;
+      throw networkError;
     }
   }
 

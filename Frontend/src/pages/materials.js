@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { Link, useSearchParams } from "react-router-dom";
+import { useSearchParams } from "react-router-dom";
 import { motion } from "framer-motion";
 import { useInView } from "react-intersection-observer";
 import { 
@@ -7,13 +7,10 @@ import {
   FileText, 
   Download, 
   Calendar, 
-  Eye, 
-  Filter,
   Grid,
   List,
   ArrowDown,
   BookOpen,
-  Clock,
   Star,
   CheckCircle,
   AlertCircle

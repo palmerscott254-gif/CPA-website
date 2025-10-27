@@ -27,7 +27,7 @@ const NavBar = () => {
   const [scrolled, setScrolled] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
-  const { theme, toggleTheme, isDark } = useTheme();
+  const { toggleTheme, isDark } = useTheme();
 
   useEffect(() => {
     const token = localStorage.getItem("access_token");

@@ -4,8 +4,6 @@ import { motion } from "framer-motion";
 import { 
   BookOpen, 
   Mail, 
-  Phone, 
-  MapPin,
   Facebook,
   Twitter,
   Linkedin,
@@ -141,15 +139,24 @@ const Footer = () => {
               © {currentYear} CPA Academy. All rights reserved.
             </p>
             <div className="flex space-x-6 text-sm">
-              <a href="#" className="hover:text-primary-400 transition-colors duration-300">
+              <button 
+                onClick={() => {/* TODO: Implement privacy policy */}} 
+                className="hover:text-primary-400 transition-colors duration-300"
+              >
                 Privacy Policy
-              </a>
-              <a href="#" className="hover:text-primary-400 transition-colors duration-300">
+              </button>
+              <button 
+                onClick={() => {/* TODO: Implement terms of service */}} 
+                className="hover:text-primary-400 transition-colors duration-300"
+              >
                 Terms of Service
-              </a>
-              <a href="#" className="hover:text-primary-400 transition-colors duration-300">
+              </button>
+              <button 
+                onClick={() => {/* TODO: Implement cookie policy */}} 
+                className="hover:text-primary-400 transition-colors duration-300"
+              >
                 Cookie Policy
-              </a>
+              </button>
             </div>
           </div>
         </div>

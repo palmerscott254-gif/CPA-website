@@ -64,7 +64,7 @@ const Register = () => {
     setError("");
 
     try {
-      const response = await fetchJSON("/auth/register/", {
+      await fetchJSON("/auth/register/", {
         method: "POST",
         body: JSON.stringify({
           username: formData.username,

@@ -24,3 +24,5 @@ services:
       - key: DJANGO_SETTINGS_MODULE
         value: cpa_academy.settings
 
+
+

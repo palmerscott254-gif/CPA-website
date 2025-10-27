@@ -39,7 +39,9 @@ const Units = () => {
   useEffect(() => {
     fetchJSON("/subjects/units/")
       .then(data => {
-        setUnits(data);
+        // Handle paginated response - data.results is the array
+        const unitsArray = Array.isArray(data) ? data : (data?.results || []);
+        setUnits(unitsArray);
         setLoading(false);
       })
       .catch(err => {

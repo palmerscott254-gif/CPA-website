@@ -39,7 +39,9 @@ const Home = () => {
   useEffect(() => {
     fetchJSON("/subjects/")
       .then(data => {
-        setSubjects(data);
+        // Handle paginated response - data.results is the array
+        const subjectsArray = Array.isArray(data) ? data : (data?.results || []);
+        setSubjects(subjectsArray);
         setLoading(false);
       })
       .catch(err => {

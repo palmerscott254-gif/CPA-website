@@ -38,7 +38,9 @@ const UnitDetail = () => {
     // Fetch unit details and materials
     Promise.all([
       fetchJSON(`/subjects/units/`).then(data => {
-        const foundUnit = data.find(u => u.id === Number(id));
+        // Handle paginated response
+        const unitsArray = Array.isArray(data) ? data : (data?.results || []);
+        const foundUnit = unitsArray.find(u => u.id === Number(id));
         if (!foundUnit) throw new Error("Unit not found");
         return foundUnit;
       }),
@@ -46,7 +48,9 @@ const UnitDetail = () => {
     ])
     .then(([unitData, materialsData]) => {
       setUnit(unitData);
-      setMaterials(materialsData);
+      // Handle paginated materials response
+      const materialsArray = Array.isArray(materialsData) ? materialsData : (materialsData?.results || []);
+      setMaterials(materialsArray);
       setLoading(false);
     })
     .catch(err => {

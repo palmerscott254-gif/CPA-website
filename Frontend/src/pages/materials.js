@@ -52,7 +52,9 @@ const Materials = () => {
 
     fetchJSON(url)
       .then(data => {
-        setMaterials(data);
+        // Handle paginated response - data.results is the array
+        const materialsArray = Array.isArray(data) ? data : (data?.results || []);
+        setMaterials(materialsArray);
         setLoading(false);
       })
       .catch(err => {

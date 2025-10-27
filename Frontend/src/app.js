@@ -13,6 +13,7 @@ import Contact from "./pages/contact";
 import Missions from "./pages/missions";
 import NavBar from "./Components/NavBar";
 import Footer from "./Components/Footer";
+import ErrorBoundary from "./Components/ErrorBoundary";
 
 const pageVariants = {
   initial: { opacity: 0, y: 20 },
@@ -40,16 +41,17 @@ const PageWrapper = ({ children }) => (
 
 export default function App() {
   return (
-    <Router>
-      <Helmet>
-        <title>CPA Academy - Master CPA Concepts</title>
-        <meta name="description" content="Master Certified Public Accountant concepts with our comprehensive learning platform. Access study materials, practice quizzes, and track your progress." />
-        <meta name="viewport" content="width=device-width, initial-scale=1" />
-        <meta name="theme-color" content="#3b82f6" />
-      </Helmet>
-      
-      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 transition-colors duration-300">
-        <NavBar />
+    <ErrorBoundary>
+      <Router>
+        <Helmet>
+          <title>CPA Academy - Master CPA Concepts</title>
+          <meta name="description" content="Master Certified Public Accountant concepts with our comprehensive learning platform. Access study materials, practice quizzes, and track your progress." />
+          <meta name="viewport" content="width=device-width, initial-scale=1" />
+          <meta name="theme-color" content="#3b82f6" />
+        </Helmet>
+        
+        <div className="min-h-screen bg-gray-50 dark:bg-gray-900 transition-colors duration-300">
+          <NavBar />
         
         <main className="pt-16 lg:pt-20">
           <Routes>
@@ -129,7 +131,8 @@ export default function App() {
         </main>
         
         <Footer />
-      </div>
-    </Router>
+        </div>
+      </Router>
+    </ErrorBoundary>
   );
 }

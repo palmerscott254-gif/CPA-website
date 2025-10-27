@@ -1,0 +1,26 @@
+services:
+  # Django Backend API
+  - type: web
+    name: cpa-website-backend
+    env: python
+    region: oregon
+    plan: free
+    branch: main
+    buildCommand: |
+      pip install --upgrade pip
+      pip install -r requirements.txt
+      python manage.py collectstatic --no-input
+      python manage.py migrate --no-input
+    startCommand: gunicorn cpa_academy.wsgi:application
+    envVars:
+      - key: DJANGO_SECRET_KEY
+        generateValue: true
+      - key: DJANGO_DEBUG
+        value: False
+      - key: DJANGO_ALLOWED_HOSTS
+        value: cpa-website-lvup.onrender.com
+      - key: PYTHON_VERSION
+        value: 3.11.0
+      - key: DJANGO_SETTINGS_MODULE
+        value: cpa_academy.settings
+

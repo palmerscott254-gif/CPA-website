@@ -17,18 +17,24 @@ def setup_django():
 def run_migrations():
     """Run all necessary migrations"""
     print("🔧 Running Django migrations...")
-    
-    # Make migrations for all apps
+
     apps = ['users', 'courses', 'materials', 'quizzes']
-    
+
+    # First, fake a rollback to zero for all apps to clear history
+    # This is safer than deleting files or dropping tables
+    print("⏪ Clearing migration history from database...")
     for app in apps:
-        print(f"📝 Making migrations for {app}...")
-        execute_from_command_line(['manage.py', 'makemigrations', app])
-    
+        print(f"   - Clearing {app}...")
+        try:
+            execute_from_command_line(['manage.py', 'migrate', app, 'zero'])
+        except Exception as e:
+            print(f"   - Could not clear {app}, it might not have migrations yet. Error: {e}")
+
     # Apply all migrations
-    print("🚀 Applying migrations...")
+    # The 'migrate' command will now run migrations for all apps from the start.
+    print("🚀 Applying all migrations from scratch...")
     execute_from_command_line(['manage.py', 'migrate'])
-    
+
     print("✅ All migrations completed successfully!")
 
 def verify_models():

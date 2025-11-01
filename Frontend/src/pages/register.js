@@ -69,8 +69,12 @@ const Register = () => {
         body: JSON.stringify({
           username: formData.username,
           email: formData.email,
-          password: formData.password
+          password: formData.password,
+          password2: formData.confirmPassword,
+          first_name: "",
+          last_name: ""
         })
+
       });
 
       setSuccess(true);

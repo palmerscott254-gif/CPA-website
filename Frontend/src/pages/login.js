@@ -65,6 +65,7 @@ const Login = () => {
     const googleLoginUrl = `${process.env.REACT_APP_API_BASE || 'http://localhost:8000/api'}/social/login/google-oauth2/`;
     window.location.href = googleLoginUrl;
   };
+  const containerVariants = {
     hidden: { opacity: 0 },
     visible: {
       opacity: 1,

@@ -1,19 +1,20 @@
-import React from "react";
+import React, { Suspense, lazy } from "react";
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import { Helmet } from "react-helmet-async";
 import { motion } from "framer-motion";
-import Home from "./pages/home";
-import Units from "./pages/units";
-import UnitDetail from "./pages/unitDetail";
-import Materials from "./pages/materials";
-import Quizzes from "./pages/quizzes";
-import Login from "./pages/login";
-import Register from "./pages/register";
-import Contact from "./pages/contact";
-import Missions from "./pages/missions";
 import NavBar from "./Components/NavBar";
 import Footer from "./Components/Footer";
 import ErrorBoundary from "./Components/ErrorBoundary";
+
+const Home = lazy(() => import("./pages/home"));
+const Units = lazy(() => import("./pages/units"));
+const UnitDetail = lazy(() => import("./pages/unitDetail"));
+const Materials = lazy(() => import("./pages/materials"));
+const Quizzes = lazy(() => import("./pages/quizzes"));
+const Login = lazy(() => import("./pages/login"));
+const Register = lazy(() => import("./pages/register"));
+const Contact = lazy(() => import("./pages/contact"));
+const Missions = lazy(() => import("./pages/missions"));
 
 const pageVariants = {
   initial: { opacity: 0, y: 20 },
@@ -54,80 +55,82 @@ export default function App() {
           <NavBar />
         
         <main className="pt-16 lg:pt-20">
-          <Routes>
-            <Route 
-              path="/" 
-              element={
-                <PageWrapper>
-                  <Home />
-                </PageWrapper>
-              } 
-            />
-            <Route 
-              path="/units" 
-              element={
-                <PageWrapper>
-                  <Units />
-                </PageWrapper>
-              } 
-            />
-            <Route 
-              path="/units/:id" 
-              element={
-                <PageWrapper>
-                  <UnitDetail />
-                </PageWrapper>
-              } 
-            />
-            <Route 
-              path="/materials" 
-              element={
-                <PageWrapper>
-                  <Materials />
-                </PageWrapper>
-              } 
-            />
-            <Route 
-              path="/quizzes" 
-              element={
-                <PageWrapper>
-                  <Quizzes />
-                </PageWrapper>
-              } 
-            />
-            <Route 
-              path="/login" 
-              element={
-                <PageWrapper>
-                  <Login />
-                </PageWrapper>
-              } 
-            />
-            <Route 
-              path="/register" 
-              element={
-                <PageWrapper>
-                  <Register />
-                </PageWrapper>
-              } 
-            />
-            <Route 
-              path="/contact" 
-              element={
-                <PageWrapper>
-                  <Contact />
-                </PageWrapper>
-              } 
-            />
-            <Route 
-              path="/missions" 
-              element={
-                <PageWrapper>
-                  <Missions />
-                </PageWrapper>
-              } 
-            />
-          </Routes>
+          <Suspense fallback={<div>Loading...</div>}>
+            <Routes>
+              <Route 
+                path="/" 
+                element={
+                  <PageWrapper>
+                    <Home />
+                  </PageWrapper>
+                } 
+              />
+              <Route 
+                path="/units" 
+                element={
+                  <PageWrapper>
+                    <Units />
+                  </PageWrapper>
+                } 
+              />
+              <Route 
+                path="/units/:id" 
+                element={
+                  <PageWrapper>
+                    <UnitDetail />
+                  </PageWrapper>
+                } 
+              />
+              <Route 
+                path="/materials" 
+                element={
+                  <PageWrapper>
+                    <Materials />
+                  </PageWrapper>
+                } 
+              />
+              <Route 
+                path="/quizzes" 
+                element={
+                  <PageWrapper>
+                    <Quizzes />
+                  </PageWrapper>
+                } 
+              />
+              <Route 
+                path="/login" 
+                element={
+                  <PageWrapper>
+                    <Login />
+                  </PageWrapper>
+                } 
+              />
+              <Route 
+                path="/register" 
+                element={
+                  <PageWrapper>
+                    <Register />
+                  </PageWrapper>
+                } 
+              />
+              <Route 
+                path="/contact" 
+                element={
+                  <PageWrapper>
+                    <Contact />
+                  </PageWrapper>
+                } 
+              />
+              <Route 
+                path="/missions" 
+                element={
+                  <PageWrapper>
+                    <Missions />
+                  </PageWrapper>
+                } 
+              />
+            </Routes>
+          </Suspense>
         </main>
         
         <Footer />

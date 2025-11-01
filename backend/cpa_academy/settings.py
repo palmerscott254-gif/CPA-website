@@ -27,7 +27,20 @@ INSTALLED_APPS = [
     "courses",
     "materials",
     "quizzes",
+    "social_django",
 ]
+
+AUTHENTICATION_BACKENDS = (
+    "social_core.backends.google.GoogleOAuth2",
+    "django.contrib.auth.backends.ModelBackend",
+)
+
+SOCIAL_AUTH_GOOGLE_OAUTH2_KEY = os.environ.get("SOCIAL_AUTH_GOOGLE_OAUTH2_KEY", "your-google-oauth2-key")
+SOCIAL_AUTH_GOOGLE_OAUTH2_SECRET = os.environ.get("SOCIAL_AUTH_GOOGLE_OAUTH2_SECRET", "your-google-oauth2-secret")
+SOCIAL_AUTH_URL_NAMESPACE = "social"
+
+LOGIN_URL = "/api/auth/login/"
+
 
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",

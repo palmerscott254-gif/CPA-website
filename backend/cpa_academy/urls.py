@@ -27,6 +27,7 @@ urlpatterns = [
     path("api/subjects/", include("courses.urls")),
     path("api/materials/", include("materials.urls")),
     path("api/quizzes/", include("quizzes.urls")),
+    path("api/social/", include("social_django.urls", namespace="social")),
 ]
 
 if settings.DEBUG:

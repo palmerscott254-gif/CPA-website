@@ -54,7 +54,8 @@ const Footer = () => {
                 return (
                   <motion.a
                     key={social.label}
-                    href={social.href}
+                    href="#"
+                    onClick={(e) => e.preventDefault()}
                     whileHover={{ scale: 1.1, y: -2 }}
                     whileTap={{ scale: 0.95 }}
                     className="w-10 h-10 bg-gray-800 hover:bg-primary-600 rounded-lg flex items-center justify-center transition-colors duration-300"

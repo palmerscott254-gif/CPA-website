@@ -383,7 +383,7 @@ const Home = () => {
                   </div>
 
                   <Link
-                    to={`/subjects/${subject.slug}`}
+                    to={`/units?subject=${subject.slug}`}
                     className="group/link inline-flex items-center text-primary-600 dark:text-primary-400 font-semibold hover:text-primary-700 dark:hover:text-primary-300 transition-colors"
                   >
                     View Units

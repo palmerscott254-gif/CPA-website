@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
 import { motion } from "framer-motion";
 import { useInView } from "react-intersection-observer";
 import { 
@@ -18,6 +18,7 @@ import { fetchJSON } from "../api";
 import { logger } from "../utils/logger";
 
 const Units = () => {
+  const location = useLocation();
   const [units, setUnits] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -37,7 +38,13 @@ const Units = () => {
   });
 
   useEffect(() => {
-    fetchJSON("/subjects/units/")
+    const params = new URLSearchParams(location.search);
+    const subject = params.get('subject');
+    let url = "/subjects/units/";
+    if (subject) {
+      url += `?search=${subject}`;
+    }
+    fetchJSON(url)
       .then(data => {
         // Handle paginated response - data.results is the array
         const unitsArray = Array.isArray(data) ? data : (data?.results || []);
@@ -49,7 +56,7 @@ const Units = () => {
         setError("Failed to load units");
         setLoading(false);
       });
-  }, []);
+  }, [location.search]);
 
   const filteredUnits = units
     .filter(unit => {

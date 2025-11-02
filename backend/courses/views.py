@@ -13,3 +13,4 @@ class UnitListView(generics.ListAPIView):
     permission_classes = [permissions.AllowAny]
     filter_backends = [filters.SearchFilter]
     search_fields = ["title", "code", "description", "subject__name"]
+    pagination_class = None

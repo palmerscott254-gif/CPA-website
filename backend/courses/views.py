@@ -12,5 +12,5 @@ class UnitListView(generics.ListAPIView):
     serializer_class = UnitSerializer
     permission_classes = [permissions.AllowAny]
     filter_backends = [filters.SearchFilter]
-    search_fields = ["title", "code", "description", "subject__name"]
+    search_fields = ["title", "code", "description", "subject__name", "subject__slug"]
     pagination_class = None

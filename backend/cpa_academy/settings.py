@@ -67,6 +67,14 @@ ACCOUNT_EMAIL_REQUIRED = True
 ACCOUNT_UNIQUE_EMAIL = True
 ACCOUNT_USERNAME_REQUIRED = False
 
+SOCIALACCOUNT_ADAPTER = 'users.adapters.MySocialAccountAdapter'
+ACCOUNT_ADAPTER = 'allauth.account.adapter.DefaultAccountAdapter'
+SOCIALACCOUNT_LOGIN_ON_GET = True
+
+REST_AUTH = {
+    'USE_JWT': True,
+    'JWT_AUTH_HTTPONLY': False,
+}
 
 LOGIN_REDIRECT_URL = os.environ.get("LOGIN_REDIRECT_URL", "https://cpa-website-1.onrender.com/")
 LOGOUT_REDIRECT_URL = os.environ.get("LOGOUT_REDIRECT_URL", "https://cpa-website-1.onrender.com/")

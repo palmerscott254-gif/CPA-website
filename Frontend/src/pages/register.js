@@ -14,6 +14,7 @@ import {
   Check
 } from "lucide-react";
 import { fetchJSON } from "../api";
+import { handleGoogleLogin } from "../utils/auth";
 
 const Register = () => {
   const [formData, setFormData] = useState({
@@ -86,34 +87,6 @@ const Register = () => {
     }
   };
 
-  const handleGoogleLogin = () => {
-    const apiBase = process.env.REACT_APP_API_BASE || (typeof window !== 'undefined' && window.location.hostname === 'cpa-website-1.onrender.com' ? 'https://cpa-website-lvup.onrender.com' : 'http://localhost:8000');
-    const googleLoginUrl = `${apiBase}/api/auth/registration/google/`;
-    localStorage.setItem('returnUrl', window.location.href);
-    window.location.href = googleLoginUrl;
-  };
-
-  // Example token-exchange helper (call after obtaining a Google token via Google Identity Services)
-  const exchangeGoogleToken = async (token) => {
-    const apiBase = process.env.REACT_APP_API_BASE || 'https://cpa-website-lvup.onrender.com';
-    const url = `${apiBase}/api/auth/registration/google/`;
-    try {
-      const res = await fetch(url, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ access_token: token }),
-        credentials: 'include',
-      });
-      const data = await res.json();
-      if (!res.ok) throw data;
-      localStorage.setItem('access_token', data.access || data.key || '');
-      localStorage.setItem('refresh_token', data.refresh || '');
-      const returnUrl = localStorage.getItem('returnUrl') || '/';
-      window.location.href = returnUrl;
-    } catch (err) {
-      console.error('Google token exchange failed', err);
-    }
-  };
   const containerVariants = {
     hidden: { opacity: 0 },
     visible: {

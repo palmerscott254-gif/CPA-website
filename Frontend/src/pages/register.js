@@ -91,8 +91,32 @@ const Register = () => {
   };
 
   const handleGoogleLogin = () => {
-    const googleLoginUrl = `${process.env.REACT_APP_API_BASE || 'http://localhost:8000/api'}/social/login/google-oauth2/`;
+    // Default: redirect-based login
+    const googleLoginUrl = `${process.env.REACT_APP_API_BASE || 'https://cpa-website-lvup.onrender.com'}/auth/login/google-oauth2/`;
+    localStorage.setItem('returnUrl', window.location.href);
     window.location.href = googleLoginUrl;
+  };
+
+  // Example token-exchange helper (call after obtaining a Google token via Google Identity Services)
+  const exchangeGoogleToken = async (token) => {
+    const apiBase = process.env.REACT_APP_API_BASE || 'https://cpa-website-lvup.onrender.com';
+    const url = `${apiBase}/api/auth/dj-rest-auth/social/login/google-oauth2/`;
+    try {
+      const res = await fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ access_token: token }),
+        credentials: 'include',
+      });
+      const data = await res.json();
+      if (!res.ok) throw data;
+      localStorage.setItem('access_token', data.access || data.key || '');
+      localStorage.setItem('refresh_token', data.refresh || '');
+      const returnUrl = localStorage.getItem('returnUrl') || '/';
+      window.location.href = returnUrl;
+    } catch (err) {
+      console.error('Google token exchange failed', err);
+    }
   };
   const containerVariants = {
     hidden: { opacity: 0 },

@@ -63,9 +63,38 @@ const Login = () => {
 
   const handleGoogleLogin = () => {
     const googleLoginUrl = `${process.env.REACT_APP_API_BASE || 'https://cpa-website-lvup.onrender.com'}/auth/login/google-oauth2/`;
-    // Store the current URL as the return URL
+    // Use browser redirect flow by default (opens provider consent page)
+    // Store the current URL as the return URL so the frontend can restore state after redirect
     localStorage.setItem('returnUrl', window.location.href);
     window.location.href = googleLoginUrl;
+  };
+
+  // Example token-exchange flow (for SPA):
+  // If you obtain a Google token client-side (id_token or access_token),
+  // POST it to the dj-rest-auth social endpoint to receive backend tokens (JWT/access/refresh).
+  // This code demonstrates the exchange; integrate with Google Identity Services to get `token`.
+  const exchangeGoogleToken = async (token) => {
+    const apiBase = process.env.REACT_APP_API_BASE || 'https://cpa-website-lvup.onrender.com';
+    const url = `${apiBase}/api/auth/dj-rest-auth/social/login/google-oauth2/`;
+    try {
+      const resp = await fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ access_token: token }),
+        credentials: 'include',
+      });
+      const data = await resp.json();
+      if (!resp.ok) throw data;
+      // dj-rest-auth should return tokens (access/refresh or auth token) depending on config
+      // Store tokens in localStorage or your auth store
+      localStorage.setItem('access_token', data.access || data.key || '');
+      localStorage.setItem('refresh_token', data.refresh || '');
+      // Redirect to returnUrl
+      const returnUrl = localStorage.getItem('returnUrl') || '/';
+      window.location.href = returnUrl;
+    } catch (err) {
+      console.error('Token exchange failed', err);
+    }
   };
   const containerVariants = {
     hidden: { opacity: 0 },

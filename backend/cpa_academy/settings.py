@@ -40,10 +40,12 @@ INSTALLED_APPS = [
 SITE_ID = 1
 
 AUTHENTICATION_BACKENDS = (
+    'allauth.account.auth_backends.AuthenticationBackend',
     'social_core.backends.google.GoogleOAuth2',
     'django.contrib.auth.backends.ModelBackend',
 )
 
+# Google OAuth2 credentials (set these in your Render or environment)
 SOCIAL_AUTH_GOOGLE_OAUTH2_KEY = os.environ.get('SOCIAL_AUTH_GOOGLE_OAUTH2_KEY')
 SOCIAL_AUTH_GOOGLE_OAUTH2_SECRET = os.environ.get('SOCIAL_AUTH_GOOGLE_OAUTH2_SECRET')
 SOCIAL_AUTH_GOOGLE_OAUTH2_SCOPE = [
@@ -51,15 +53,19 @@ SOCIAL_AUTH_GOOGLE_OAUTH2_SCOPE = [
     'https://www.googleapis.com/auth/userinfo.profile',
 ]
 
-# JWT Settings for social auth
+# Redirects and HTTPS settings
+SOCIAL_AUTH_LOGIN_REDIRECT_URL = os.environ.get('SOCIAL_AUTH_LOGIN_REDIRECT_URL', 'https://cpa-website-1.onrender.com/')
+SOCIAL_AUTH_REDIRECT_IS_HTTPS = not DEBUG
+
+# Optional: allow a comma-separated list of allowed redirect URIs (not required for basic flow)
 SOCIAL_AUTH_ALLOWED_REDIRECT_URIS = [
-    'https://cpa-website-1.onrender.com/login',
-    'http://localhost:3000/login'
+    uri.strip() for uri in os.environ.get('SOCIAL_AUTH_ALLOWED_REDIRECT_URIS', 'https://cpa-website-1.onrender.com/login,http://localhost:3000/login').split(',')
 ]
 
 LOGIN_URL = "/auth/login/google-oauth2/"
-LOGIN_REDIRECT_URL = "/"
-LOGOUT_REDIRECT_URL = "/"
+# Redirect users back to the frontend after successful login by default (override with env var)
+LOGIN_REDIRECT_URL = os.environ.get("LOGIN_REDIRECT_URL", SOCIAL_AUTH_LOGIN_REDIRECT_URL)
+LOGOUT_REDIRECT_URL = os.environ.get("LOGOUT_REDIRECT_URL", SOCIAL_AUTH_LOGIN_REDIRECT_URL)
 
 
 MIDDLEWARE = [

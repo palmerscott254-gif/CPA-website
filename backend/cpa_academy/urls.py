@@ -28,6 +28,7 @@ urlpatterns = [
     path("api/auth/dj-rest-auth/", include("dj_rest_auth.urls")),
     # dj-rest-auth registration endpoints, including social auth login/connect
     path("api/auth/registration/", include("dj_rest_auth.registration.urls")),
+    path('api/auth/', include('allauth.urls')),
     path("api/subjects/", include("courses.urls")),
     path("api/materials/", include("materials.urls")),
     path("api/quizzes/", include("quizzes.urls")),

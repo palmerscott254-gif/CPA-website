@@ -49,7 +49,6 @@ SOCIALACCOUNT_PROVIDERS = {
         'APP': {
             'client_id': os.environ.get('GOOGLE_CLIENT_ID'),
             'secret': os.environ.get('GOOGLE_SECRET'),
-            'key': ''
         },
         'SCOPE': [
             'profile',
@@ -68,12 +67,15 @@ ACCOUNT_UNIQUE_EMAIL = True
 ACCOUNT_USERNAME_REQUIRED = False
 
 SOCIALACCOUNT_ADAPTER = 'users.adapters.MySocialAccountAdapter'
-ACCOUNT_ADAPTER = 'allauth.account.adapter.DefaultAccountAdapter'
+ACCOUNT_ADAPTER = 'users.adapters.MySocialAccountAdapter'
 SOCIALACCOUNT_LOGIN_ON_GET = True
 
 REST_AUTH = {
     'USE_JWT': True,
     'JWT_AUTH_HTTPONLY': False,
+    'LOGIN_SERIALIZER': 'dj_rest_auth.serializers.LoginSerializer',
+    'REGISTER_SERIALIZER': 'dj_rest_auth.registration.serializers.RegisterSerializer',
+    'USER_DETAILS_SERIALIZER': 'users.serializers.UserSerializer',
 }
 
 LOGIN_REDIRECT_URL = os.environ.get("LOGIN_REDIRECT_URL", "https://cpa-website-1.onrender.com/")

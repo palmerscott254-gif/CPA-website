@@ -8,5 +8,5 @@ urlpatterns = [
     path("login/", CustomTokenObtainPairView.as_view(), name="token_obtain_pair"),
     path("refresh/", TokenRefreshView.as_view(), name="token_refresh"),
     path("user/", UserProfileView.as_view(), name="user_profile"),
-    path("google/", GoogleLogin.as_view(), name="google_login"),
+    path("registration/google/", GoogleLogin.as_view(), name="google_login"),
 ]

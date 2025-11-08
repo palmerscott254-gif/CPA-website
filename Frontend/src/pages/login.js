@@ -180,7 +180,7 @@ const Login = () => {
                 </span>
               </motion.div>
             )}
-          </AnPresence>
+          </AnimatePresence>
 
           {/* Error Message */}
           <AnimatePresence>

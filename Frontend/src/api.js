@@ -1,4 +1,19 @@
-const API_BASE = process.env.REACT_APP_API_BASE || "http://localhost:8000/api";
+// Determine API base URL:
+// Priority: REACT_APP_API_BASE env var -> production mapping -> localhost dev
+let API_BASE = process.env.REACT_APP_API_BASE;
+if (!API_BASE) {
+  try {
+    const host = typeof window !== 'undefined' ? window.location.hostname : 'localhost';
+    // If frontend is hosted on the production frontend domain, default to the deployed backend
+    if (host === 'cpa-website-1.onrender.com') {
+      API_BASE = 'https://cpa-website-lvup.onrender.com/api';
+    } else {
+      API_BASE = 'http://localhost:8000/api';
+    }
+  } catch (e) {
+    API_BASE = 'http://localhost:8000/api';
+  }
+}
 
 // Enhanced API utility with better error handling and token management
 export class ApiClient {

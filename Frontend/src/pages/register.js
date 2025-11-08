@@ -91,8 +91,8 @@ const Register = () => {
   };
 
   const handleGoogleLogin = () => {
-    // Default: redirect-based login
-    const googleLoginUrl = `${process.env.REACT_APP_API_BASE || 'https://cpa-website-lvup.onrender.com'}/auth/login/google-oauth2/`;
+    const apiBase = process.env.REACT_APP_API_BASE || (typeof window !== 'undefined' && window.location.hostname === 'cpa-website-1.onrender.com' ? 'https://cpa-website-lvup.onrender.com' : 'http://localhost:8000');
+    const googleLoginUrl = `${apiBase}/auth/login/google-oauth2/`;
     localStorage.setItem('returnUrl', window.location.href);
     window.location.href = googleLoginUrl;
   };

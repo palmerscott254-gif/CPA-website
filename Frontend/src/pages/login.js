@@ -62,7 +62,9 @@ const Login = () => {
   };
 
   const handleGoogleLogin = () => {
-    const googleLoginUrl = `${process.env.REACT_APP_API_BASE || 'https://cpa-website-lvup.onrender.com'}/auth/login/google-oauth2/`;
+    // Use the configured API base or default mapping in api.js
+    const apiBase = process.env.REACT_APP_API_BASE || (typeof window !== 'undefined' && window.location.hostname === 'cpa-website-1.onrender.com' ? 'https://cpa-website-lvup.onrender.com' : 'http://localhost:8000');
+    const googleLoginUrl = `${apiBase}/auth/login/google-oauth2/`;
     // Use browser redirect flow by default (opens provider consent page)
     // Store the current URL as the return URL so the frontend can restore state after redirect
     localStorage.setItem('returnUrl', window.location.href);

@@ -62,7 +62,9 @@ const Login = () => {
   };
 
   const handleGoogleLogin = () => {
-    const googleLoginUrl = `${process.env.REACT_APP_API_BASE || 'http://localhost:8000/api'}/social/login/google-oauth2/`;
+    const googleLoginUrl = `${process.env.REACT_APP_API_BASE || 'https://cpa-website-lvup.onrender.com'}/auth/login/google-oauth2/`;
+    // Store the current URL as the return URL
+    localStorage.setItem('returnUrl', window.location.href);
     window.location.href = googleLoginUrl;
   };
   const containerVariants = {

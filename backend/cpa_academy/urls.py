@@ -28,6 +28,7 @@ urlpatterns = [
     path("api/materials/", include("materials.urls")),
     path("api/quizzes/", include("quizzes.urls")),
     path("auth/", include("social_django.urls", namespace="social")),
+    path('dj-rest-auth/', include('dj_rest_auth.urls')),
 ]
 
 if settings.DEBUG:

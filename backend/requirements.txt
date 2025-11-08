@@ -26,4 +26,6 @@ whitenoise==6.8.2
 # Environment Variables (Recommended)
 python-decouple==3.8
 social-auth-app-django==5.4.1
+dj-rest-auth[with_social]==6.0.0
+django-allauth==0.63.3
 python-dotenv==1.0.1

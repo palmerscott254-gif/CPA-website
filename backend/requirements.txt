@@ -23,9 +23,11 @@ whitenoise==6.8.2
 # Database - PostgreSQL (Optional - if you upgrade from SQLite)
 # psycopg2-binary==2.9.10
 
-# Environment Variables (Recommended)
-python-decouple==3.8
-social-auth-app-django==5.4.1
+# Authentication & Social Auth
 dj-rest-auth[with_social]==6.0.0
-django-allauth==0.63.3
+django-allauth==0.61.1  # Downgraded to satisfy dj-rest-auth requirement
+social-auth-app-django==5.4.1
+
+# Environment Variables
+python-decouple==3.8
 python-dotenv==1.0.1

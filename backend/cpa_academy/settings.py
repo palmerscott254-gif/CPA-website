@@ -20,52 +20,56 @@ INSTALLED_APPS = [
     "django.contrib.sessions",
     "django.contrib.messages",
     "django.contrib.staticfiles",
+    "django.contrib.sites",
     "rest_framework",
-    'rest_framework.authtoken',
-    'dj_rest_auth',
+    "rest_framework.authtoken",
     "rest_framework_simplejwt",
     "corsheaders",
+    "allauth",
+    "allauth.account",
+    "allauth.socialaccount",
+    "allauth.socialaccount.providers.google",
+    "dj_rest_auth",
+    "dj_rest_auth.registration",
     "users",
     "courses",
     "materials",
     "quizzes",
-    "social_django",
-    'django.contrib.sites',
-    'allauth',
-    'allauth.account',
-    'allauth.socialaccount',
-    'allauth.socialaccount.providers.google',
 ]
 
 SITE_ID = 1
 
 AUTHENTICATION_BACKENDS = (
-    'allauth.account.auth_backends.AuthenticationBackend',
-    'social_core.backends.google.GoogleOAuth2',
-    'django.contrib.auth.backends.ModelBackend',
+    "allauth.account.auth_backends.AuthenticationBackend",
+    "django.contrib.auth.backends.ModelBackend",
 )
 
-# Google OAuth2 credentials (set these in your Render or environment)
-SOCIAL_AUTH_GOOGLE_OAUTH2_KEY = os.environ.get('SOCIAL_AUTH_GOOGLE_OAUTH2_KEY')
-SOCIAL_AUTH_GOOGLE_OAUTH2_SECRET = os.environ.get('SOCIAL_AUTH_GOOGLE_OAUTH2_SECRET')
-SOCIAL_AUTH_GOOGLE_OAUTH2_SCOPE = [
-    'https://www.googleapis.com/auth/userinfo.email',
-    'https://www.googleapis.com/auth/userinfo.profile',
-]
+SOCIALACCOUNT_PROVIDERS = {
+    'google': {
+        'APP': {
+            'client_id': os.environ.get('GOOGLE_CLIENT_ID'),
+            'secret': os.environ.get('GOOGLE_SECRET'),
+            'key': ''
+        },
+        'SCOPE': [
+            'profile',
+            'email',
+        ],
+        'AUTH_PARAMS': {
+            'access_type': 'online',
+        }
+    }
+}
 
-# Redirects and HTTPS settings
-SOCIAL_AUTH_LOGIN_REDIRECT_URL = os.environ.get('SOCIAL_AUTH_LOGIN_REDIRECT_URL', 'https://cpa-website-1.onrender.com/')
-SOCIAL_AUTH_REDIRECT_IS_HTTPS = not DEBUG
+ACCOUNT_EMAIL_VERIFICATION = "none"
+ACCOUNT_AUTHENTICATION_METHOD = "email"
+ACCOUNT_EMAIL_REQUIRED = True
+ACCOUNT_UNIQUE_EMAIL = True
+ACCOUNT_USERNAME_REQUIRED = False
 
-# Optional: allow a comma-separated list of allowed redirect URIs (not required for basic flow)
-SOCIAL_AUTH_ALLOWED_REDIRECT_URIS = [
-    uri.strip() for uri in os.environ.get('SOCIAL_AUTH_ALLOWED_REDIRECT_URIS', 'https://cpa-website-1.onrender.com/login,http://localhost:3000/login').split(',')
-]
 
-LOGIN_URL = "/auth/login/google-oauth2/"
-# Redirect users back to the frontend after successful login by default (override with env var)
-LOGIN_REDIRECT_URL = os.environ.get("LOGIN_REDIRECT_URL", SOCIAL_AUTH_LOGIN_REDIRECT_URL)
-LOGOUT_REDIRECT_URL = os.environ.get("LOGOUT_REDIRECT_URL", SOCIAL_AUTH_LOGIN_REDIRECT_URL)
+LOGIN_REDIRECT_URL = os.environ.get("LOGIN_REDIRECT_URL", "https://cpa-website-1.onrender.com/")
+LOGOUT_REDIRECT_URL = os.environ.get("LOGOUT_REDIRECT_URL", "https://cpa-website-1.onrender.com/")
 
 
 MIDDLEWARE = [
@@ -93,8 +97,6 @@ TEMPLATES = [
             "django.template.context_processors.request",
             "django.contrib.auth.context_processors.auth",
             "django.contrib.messages.context_processors.messages",
-            "social_django.context_processors.backends",
-            "social_django.context_processors.login_redirect",
         ]},
     },
 ]
@@ -165,16 +167,3 @@ CSRF_TRUSTED_ORIGINS = [
     "https://cpa-website-1.onrender.com",
     "https://cpa-website-lvup.onrender.com",
 ]
-
-# Social Auth Settings
-SOCIAL_AUTH_PIPELINE = (
-    "social_core.pipeline.social_auth.social_details",
-    "social_core.pipeline.social_auth.social_uid",
-    "social_core.pipeline.social_auth.auth_allowed",
-    "social_core.pipeline.social_auth.social_user",
-    "social_core.pipeline.user.get_username",
-    "social_core.pipeline.user.create_user",
-    "social_core.pipeline.social_auth.associate_user",
-    "social_core.pipeline.social_auth.load_extra_data",
-    "social_core.pipeline.user.user_details",
-)

@@ -17,7 +17,6 @@ import { fetchJSON } from "../api";
 
 const Register = () => {
   const [formData, setFormData] = useState({
-    username: "",
     email: "",
     password: "",
     confirmPassword: ""
@@ -67,12 +66,9 @@ const Register = () => {
       await fetchJSON("/auth/register/", {
         method: "POST",
         body: JSON.stringify({
-          username: formData.username,
           email: formData.email,
           password: formData.password,
           password2: formData.confirmPassword,
-          first_name: "",
-          last_name: ""
         })
 
       });
@@ -92,7 +88,7 @@ const Register = () => {
 
   const handleGoogleLogin = () => {
     const apiBase = process.env.REACT_APP_API_BASE || (typeof window !== 'undefined' && window.location.hostname === 'cpa-website-1.onrender.com' ? 'https://cpa-website-lvup.onrender.com' : 'http://localhost:8000');
-    const googleLoginUrl = `${apiBase}/auth/login/google-oauth2/`;
+    const googleLoginUrl = `${apiBase}/api/auth/registration/google/`;
     localStorage.setItem('returnUrl', window.location.href);
     window.location.href = googleLoginUrl;
   };
@@ -100,7 +96,7 @@ const Register = () => {
   // Example token-exchange helper (call after obtaining a Google token via Google Identity Services)
   const exchangeGoogleToken = async (token) => {
     const apiBase = process.env.REACT_APP_API_BASE || 'https://cpa-website-lvup.onrender.com';
-    const url = `${apiBase}/api/auth/dj-rest-auth/social/login/google-oauth2/`;
+    const url = `${apiBase}/api/auth/registration/google/`;
     try {
       const res = await fetch(url, {
         method: 'POST',
@@ -144,7 +140,7 @@ const Register = () => {
     { text: "At least 8 characters", met: formData.password.length >= 8 },
     { text: "Contains uppercase letter", met: /[A-Z]/.test(formData.password) },
     { text: "Contains lowercase letter", met: /[a-z]/.test(formData.password) },
-    { text: "Contains number", met: /\d/.test(formData.password) }
+    { text: "Contains number", met: /\d]/.test(formData.password) }
   ];
 
   return (
@@ -227,30 +223,6 @@ const Register = () => {
           </AnimatePresence>
 
           <form onSubmit={handleSubmit} className="space-y-6">
-            {/* Username Field */}
-            <motion.div
-              variants={itemVariants}
-              className="space-y-2"
-            >
-              <label className="form-label">
-                Username
-              </label>
-              <div className="relative">
-                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                  <User className="w-5 h-5 text-gray-400" />
-                </div>
-                <input
-                  type="text"
-                  name="username"
-                  value={formData.username}
-                  onChange={handleChange}
-                  required
-                  className="form-input pl-10"
-                  placeholder="Choose a username"
-                />
-              </div>
-            </motion.div>
-
             {/* Email Field */}
             <motion.div
               variants={itemVariants}

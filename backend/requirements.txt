@@ -26,7 +26,6 @@ whitenoise==6.8.2
 # Authentication & Social Auth
 dj-rest-auth[with_social]==6.0.0
 django-allauth==0.61.1  # Downgraded to satisfy dj-rest-auth requirement
-social-auth-app-django==5.4.1
 
 # Environment Variables
 python-decouple==3.8

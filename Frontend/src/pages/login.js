@@ -15,7 +15,7 @@ import { fetchJSON } from "../api";
 
 const Login = () => {
   const [formData, setFormData] = useState({
-    username: "",
+    email: "",
     password: ""
   });
   const [showPassword, setShowPassword] = useState(false);
@@ -64,7 +64,7 @@ const Login = () => {
   const handleGoogleLogin = () => {
     // Use the configured API base or default mapping in api.js
     const apiBase = process.env.REACT_APP_API_BASE || (typeof window !== 'undefined' && window.location.hostname === 'cpa-website-1.onrender.com' ? 'https://cpa-website-lvup.onrender.com' : 'http://localhost:8000');
-    const googleLoginUrl = `${apiBase}/auth/login/google-oauth2/`;
+    const googleLoginUrl = `${apiBase}/api/auth/registration/google/`;
     // Use browser redirect flow by default (opens provider consent page)
     // Store the current URL as the return URL so the frontend can restore state after redirect
     localStorage.setItem('returnUrl', window.location.href);
@@ -77,7 +77,7 @@ const Login = () => {
   // This code demonstrates the exchange; integrate with Google Identity Services to get `token`.
   const exchangeGoogleToken = async (token) => {
     const apiBase = process.env.REACT_APP_API_BASE || 'https://cpa-website-lvup.onrender.com';
-    const url = `${apiBase}/api/auth/dj-rest-auth/social/login/google-oauth2/`;
+    const url = `${apiBase}/api/auth/registration/google/`;
     try {
       const resp = await fetch(url, {
         method: 'POST',
@@ -180,7 +180,7 @@ const Login = () => {
                 </span>
               </motion.div>
             )}
-          </AnimatePresence>
+          </AnPresence>
 
           {/* Error Message */}
           <AnimatePresence>
@@ -200,26 +200,26 @@ const Login = () => {
           </AnimatePresence>
 
           <form onSubmit={handleSubmit} className="space-y-6">
-            {/* Username Field */}
+            {/* Email Field */}
             <motion.div
               variants={itemVariants}
               className="space-y-2"
             >
               <label className="form-label">
-                Username
+                Email
               </label>
               <div className="relative">
                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                   <Mail className="w-5 h-5 text-gray-400" />
                 </div>
                 <input
-                  type="text"
-                  name="username"
-                  value={formData.username}
+                  type="email"
+                  name="email"
+                  value={formData.email}
                   onChange={handleChange}
                   required
                   className="form-input pl-10"
-                  placeholder="Enter your username"
+                  placeholder="Enter your email"
                 />
               </div>
             </motion.div>

@@ -7,7 +7,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = os.getenv("DJANGO_SECRET_KEY", "django-insecure-your-new-secret-key")
 DEBUG = os.getenv("DJANGO_DEBUG", "True") == "True"
 
-ALLOWED_HOSTS = ["localhost", "127.0.0.1"] if DEBUG else [
+ALLOWED_HOSTS = ["localhost", "127.0.0.1", "cpa-website-lvup.onrender.com"] if DEBUG else [
     "cpa-website-lvup.onrender.com",
 ] + (os.getenv("DJANGO_ALLOWED_HOSTS", "").split(",") if os.getenv("DJANGO_ALLOWED_HOSTS") else [])
 

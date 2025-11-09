@@ -3,7 +3,13 @@ import os
 
 # Production settings
 DEBUG = False
-ALLOWED_HOSTS = os.getenv("DJANGO_ALLOWED_HOSTS", "").split(",")
+ALLOWED_HOSTS = [
+    "cpa-website-lvup.onrender.com",
+    "cpa-website-1.onrender.com",
+]
+allowed_hosts_env = os.getenv("DJANGO_ALLOWED_HOSTS")
+if allowed_hosts_env:
+    ALLOWED_HOSTS.extend(allowed_hosts_env.split(","))
 
 # Security settings
 SECURE_BROWSER_XSS_FILTER = True

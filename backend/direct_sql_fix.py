@@ -6,8 +6,13 @@ This script directly adds the file_type column to the database.
 
 import os
 import sys
+import logging
 import django
 from django.core.management import execute_from_command_line
+
+# Configure module logger
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 def setup_django():
     """Setup Django environment"""
@@ -16,7 +21,7 @@ def setup_django():
 
 def direct_sql_fix():
     """Directly add the file_type column using SQL"""
-    print("🔧 Applying direct SQL fix...")
+    logger.info("🔧 Applying direct SQL fix...")
     
     try:
         from django.db import connection
@@ -27,11 +32,11 @@ def direct_sql_fix():
             columns = [row[1] for row in cursor.fetchall()]
             
             if 'file_type' in columns:
-                print("✅ file_type column already exists!")
+                logger.info("✅ file_type column already exists!")
                 return True
             
             # Add the file_type column
-            print("📝 Adding file_type column...")
+            logger.info("📝 Adding file_type column...")
             cursor.execute("ALTER TABLE materials_material ADD COLUMN file_type VARCHAR(10) DEFAULT ''")
             
             # Verify the column was added
@@ -39,19 +44,19 @@ def direct_sql_fix():
             columns = [row[1] for row in cursor.fetchall()]
             
             if 'file_type' in columns:
-                print("✅ file_type column added successfully!")
+                logger.info("✅ file_type column added successfully!")
                 return True
             else:
-                print("❌ Failed to add file_type column!")
+                logger.error("❌ Failed to add file_type column!")
                 return False
                 
     except Exception as e:
-        print(f"❌ Error applying SQL fix: {e}")
+        logger.error(f"❌ Error applying SQL fix: {e}")
         return False
 
 def test_fix():
     """Test that the fix works"""
-    print("🧪 Testing the fix...")
+    logger.info("🧪 Testing the fix...")
     
     try:
         from materials.models import Material
@@ -78,18 +83,18 @@ def test_fix():
         )
         material.save()
         
-        print("✅ Material creation successful!")
-        print(f"✅ Material ID: {material.id}")
-        print(f"✅ File type: {material.file_type}")
+    logger.info("✅ Material creation successful!")
+    logger.info(f"✅ Material ID: {material.id}")
+    logger.info(f"✅ File type: {material.file_type}")
         
         # Clean up
         material.delete()
-        print("🧹 Test data cleaned up")
+    logger.info("🧹 Test data cleaned up")
         
         return True
         
     except Exception as e:
-        print(f"❌ Error testing fix: {e}")
+        logger.error(f"❌ Error testing fix: {e}")
         return False
 
 if __name__ == '__main__':
@@ -97,9 +102,9 @@ if __name__ == '__main__':
     
     if direct_sql_fix():
         if test_fix():
-            print("🎉 Direct SQL fix completed successfully!")
-            print("✅ You can now use the admin panel to add materials")
+            logger.info("🎉 Direct SQL fix completed successfully!")
+            logger.info("✅ You can now use the admin panel to add materials")
         else:
-            print("⚠️  SQL fix applied but test failed")
+            logger.warning("⚠️  SQL fix applied but test failed")
     else:
-        print("❌ SQL fix failed - please check the error above")
+        logger.error("❌ SQL fix failed - please check the error above")

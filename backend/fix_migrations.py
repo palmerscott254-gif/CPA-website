@@ -6,8 +6,13 @@ This script ensures all database migrations are properly applied.
 
 import os
 import sys
+import logging
 import django
 from django.core.management import execute_from_command_line
+
+# Configure module logger
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 def setup_django():
     """Setup Django environment"""
@@ -16,30 +21,30 @@ def setup_django():
 
 def run_migrations():
     """Run all necessary migrations"""
-    print("🔧 Running Django migrations...")
+    logger.info("🔧 Running Django migrations...")
 
     apps = ['users', 'courses', 'materials', 'quizzes']
 
     # First, fake a rollback to zero for all apps to clear history
     # This is safer than deleting files or dropping tables
-    print("⏪ Clearing migration history from database...")
+    logger.info("⏪ Clearing migration history from database...")
     for app in apps:
-        print(f"   - Clearing {app}...")
+    logger.info(f"   - Clearing {app}...")
         try:
             execute_from_command_line(['manage.py', 'migrate', app, 'zero'])
         except Exception as e:
-            print(f"   - Could not clear {app}, it might not have migrations yet. Error: {e}")
+            logger.warning(f"   - Could not clear {app}, it might not have migrations yet. Error: {e}")
 
     # Apply all migrations
     # The 'migrate' command will now run migrations for all apps from the start.
-    print("🚀 Applying all migrations from scratch...")
+    logger.info("🚀 Applying all migrations from scratch...")
     execute_from_command_line(['manage.py', 'migrate'])
 
-    print("✅ All migrations completed successfully!")
+    logger.info("✅ All migrations completed successfully!")
 
 def verify_models():
     """Verify that all models can be imported and created"""
-    print("🔍 Verifying models...")
+    logger.info("🔍 Verifying models...")
     
     try:
         from users.models import User
@@ -47,7 +52,7 @@ def verify_models():
         from materials.models import Material
         from quizzes.models import QuestionSet, Question, QuizAttempt
         
-        print("✅ All models imported successfully")
+    logger.info("✅ All models imported successfully")
         
         # Test creating instances (without saving)
         user = User(username='test', email='test@example.com')
@@ -58,10 +63,10 @@ def verify_models():
         question = Question(question_set=question_set, text='Test Question', choices={}, correct_choice='A')
         attempt = QuizAttempt(user=user, question_set=question_set, score=0, total=1)
         
-        print("✅ All model instances created successfully")
+    logger.info("✅ All model instances created successfully")
         
     except Exception as e:
-        print(f"❌ Error verifying models: {e}")
+        logger.error(f"❌ Error verifying models: {e}")
         return False
     
     return True
@@ -70,4 +75,4 @@ if __name__ == '__main__':
     setup_django()
     run_migrations()
     verify_models()
-    print("🎉 Migration fix completed!")
+    logger.info("🎉 Migration fix completed!")

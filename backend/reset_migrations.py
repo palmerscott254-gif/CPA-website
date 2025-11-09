@@ -6,8 +6,13 @@ This script safely resets migrations and recreates them.
 
 import os
 import sys
+import logging
 import django
 from django.core.management import execute_from_command_line
+
+# Configure module logger
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 def setup_django():
     """Setup Django environment"""
@@ -16,7 +21,7 @@ def setup_django():
 
 def reset_migrations():
     """Reset and recreate all migrations"""
-    print("🔄 Resetting migrations...")
+    logger.info("🔄 Resetting migrations...")
     
     # Remove migration files (except __init__.py)
     apps = ['users', 'courses', 'materials', 'quizzes']
@@ -28,19 +33,19 @@ def reset_migrations():
                 if file.endswith('.py') and file != '__init__.py':
                     file_path = os.path.join(migrations_dir, file)
                     os.remove(file_path)
-                    print(f"🗑️  Removed {file_path}")
+                    logger.info(f"🗑️  Removed {file_path}")
     
     # Create fresh migrations
-    print("📝 Creating fresh migrations...")
+    logger.info("📝 Creating fresh migrations...")
     execute_from_command_line(['manage.py', 'makemigrations'])
     
     # Apply migrations
-    print("🚀 Applying fresh migrations...")
+    logger.info("🚀 Applying fresh migrations...")
     execute_from_command_line(['manage.py', 'migrate'])
     
-    print("✅ Migration reset completed!")
+    logger.info("✅ Migration reset completed!")
 
 if __name__ == '__main__':
     setup_django()
     reset_migrations()
-    print("🎉 Migration reset completed!")
+    logger.info("🎉 Migration reset completed!")

@@ -6,8 +6,13 @@ This script applies the missing file_type migration.
 
 import os
 import sys
+import logging
 import django
 from django.core.management import execute_from_command_line
+
+# Configure module logger
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 def setup_django():
     """Setup Django environment"""
@@ -16,12 +21,12 @@ def setup_django():
 
 def apply_migration():
     """Apply the file_type migration"""
-    print("🔧 Applying file_type migration...")
+    logger.info("🔧 Applying file_type migration...")
     
     try:
         # Apply migrations
         execute_from_command_line(['manage.py', 'migrate', 'materials'])
-        print("✅ Migration applied successfully!")
+    logger.info("✅ Migration applied successfully!")
         
         # Verify the migration was applied
         from django.db import connection
@@ -30,20 +35,20 @@ def apply_migration():
             columns = [row[1] for row in cursor.fetchall()]
             
             if 'file_type' in columns:
-                print("✅ file_type column confirmed in database!")
+                logger.info("✅ file_type column confirmed in database!")
             else:
-                print("❌ file_type column not found!")
+                logger.error("❌ file_type column not found!")
                 return False
                 
     except Exception as e:
-        print(f"❌ Error applying migration: {e}")
+        logger.error(f"❌ Error applying migration: {e}")
         return False
     
     return True
 
 def test_admin():
     """Test admin functionality"""
-    print("🧪 Testing admin functionality...")
+    logger.info("🧪 Testing admin functionality...")
     
     try:
         from materials.models import Material
@@ -70,16 +75,16 @@ def test_admin():
         )
         material.save()
         
-        print("✅ Material creation test passed!")
-        print(f"✅ Material ID: {material.id}")
-        print(f"✅ File type: {material.file_type}")
+    logger.info("✅ Material creation test passed!")
+    logger.info(f"✅ Material ID: {material.id}")
+    logger.info(f"✅ File type: {material.file_type}")
         
         # Clean up test data
         material.delete()
-        print("🧹 Test data cleaned up")
+    logger.info("🧹 Test data cleaned up")
         
     except Exception as e:
-        print(f"❌ Error testing admin: {e}")
+        logger.error(f"❌ Error testing admin: {e}")
         return False
     
     return True
@@ -89,9 +94,9 @@ if __name__ == '__main__':
     
     if apply_migration():
         if test_admin():
-            print("🎉 Migration fix completed successfully!")
-            print("✅ You can now use the admin panel to add materials")
+            logger.info("🎉 Migration fix completed successfully!")
+            logger.info("✅ You can now use the admin panel to add materials")
         else:
-            print("⚠️  Migration applied but admin test failed")
+            logger.warning("⚠️  Migration applied but admin test failed")
     else:
-        print("❌ Migration failed - please check the error above")
+        logger.error("❌ Migration failed - please check the error above")

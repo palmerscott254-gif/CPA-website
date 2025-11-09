@@ -6,7 +6,6 @@ import {
   EyeOff, 
   Mail, 
   Lock, 
-  User,
   ArrowRight, 
   BookOpen,
   CheckCircle,
@@ -64,22 +63,28 @@ const Register = () => {
     setError("");
 
     try {
-      await fetchJSON("/auth/register/", {
+      const response = await fetchJSON("/auth/register/", {
         method: "POST",
         body: JSON.stringify({
           email: formData.email,
           password: formData.password,
           password2: formData.confirmPassword,
         })
-
       });
 
+      // If backend returns tokens, store them and redirect to home.
+      if (response?.access) {
+        localStorage.setItem("access_token", response.access);
+        if (response.refresh) localStorage.setItem("refresh_token", response.refresh);
+      }
+
       setSuccess(true);
-      
+
       // Redirect after a brief success animation
       setTimeout(() => {
-        navigate("/login");
-      }, 2000);
+        if (response?.access) navigate("/");
+        else navigate("/login");
+      }, 1500);
     } catch (err) {
       setError(err.data?.detail || "Registration failed. Please try again.");
     } finally {

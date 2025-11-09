@@ -1,5 +1,6 @@
 import React from 'react';
 import { AlertCircle } from 'lucide-react';
+import logger from '../utils/logger';
 
 class ErrorBoundary extends React.Component {
   constructor(props) {
@@ -14,9 +15,8 @@ class ErrorBoundary extends React.Component {
 
   componentDidCatch(error, errorInfo) {
     // Log the error to console in development
-    if (process.env.NODE_ENV === 'development') {
-      console.error('Error caught by boundary:', error, errorInfo);
-    }
+    // Use centralized logger so logs can be controlled in production
+    logger.error('Error caught by boundary:', { error, errorInfo });
     
     // You can also log to an error reporting service here
     this.setState({

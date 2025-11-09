@@ -1,4 +1,5 @@
 // src/utils/auth.js
+import logger from './logger';
 
 const getApiBase = () => {
   return process.env.REACT_APP_API_BASE || 
@@ -9,8 +10,10 @@ const getApiBase = () => {
 
 export const handleGoogleLogin = () => {
   const apiBase = getApiBase();
-  // This URL should initiate the Google OAuth flow from the backend
-  const googleAuthInitiateUrl = `${apiBase}/auth/registration/google/?redirect_uri=${window.location.origin}/google-callback`;
+  // This URL should initiate the Google OAuth flow from the backend.
+  // Ensure the redirect URI is URL encoded and includes the correct callback path.
+  const redirectUri = encodeURIComponent(`${window.location.origin}/google-callback`);
+  const googleAuthInitiateUrl = `${apiBase}/auth/registration/google/?redirect_uri=${redirectUri}`;
   localStorage.setItem('returnUrl', window.location.href);
   window.location.href = googleAuthInitiateUrl;
 };
@@ -32,6 +35,6 @@ export const exchangeGoogleToken = async (token) => {
     const returnUrl = localStorage.getItem('returnUrl') || '/';
     window.location.href = returnUrl;
   } catch (err) {
-    console.error('Google token exchange failed', err);
+    logger.error('Google token exchange failed', err);
   }
 };

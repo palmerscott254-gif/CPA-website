@@ -1,6 +1,7 @@
 import React, { useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { exchangeGoogleToken } from '../utils/auth';
+import logger from '../utils/logger';
 
 const GoogleCallback = () => {
   const navigate = useNavigate();
@@ -13,7 +14,7 @@ const GoogleCallback = () => {
       const error = params.get('error');
 
       if (error) {
-        console.error('Google OAuth error:', error);
+        logger.error('Google OAuth error:', error);
         navigate('/login?error=google_oauth_failed');
         return;
       }
@@ -27,7 +28,7 @@ const GoogleCallback = () => {
           navigate(localStorage.getItem('returnUrl') || '/');
           localStorage.removeItem('returnUrl');
         } catch (err) {
-          console.error('Error exchanging Google code:', err);
+          logger.error('Error exchanging Google code:', err);
           navigate('/login?error=google_login_failed');
         }
       } else {

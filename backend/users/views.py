@@ -4,6 +4,7 @@ from .models import User
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework_simplejwt.views import TokenObtainPairView
+from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 from allauth.socialaccount.providers.google.views import GoogleOAuth2Adapter
 from allauth.socialaccount.providers.oauth2.client import OAuth2Client
@@ -41,6 +42,24 @@ class RegisterView(generics.CreateAPIView):
     queryset = User.objects.all()
     serializer_class = RegisterSerializer
     permission_classes = [permissions.AllowAny]
+
+    def create(self, request, *args, **kwargs):
+        """Create the user and return JWT tokens along with user data."""
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        user = serializer.save()
+
+        # Create JWT tokens for the newly created user
+        refresh = RefreshToken.for_user(user)
+        access = str(refresh.access_token)
+
+        user_data = UserSerializer(user).data
+
+        return Response({
+            "user": user_data,
+            "access": access,
+            "refresh": str(refresh)
+        }, status=201)
 
 class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
     @classmethod

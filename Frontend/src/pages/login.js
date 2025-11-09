@@ -40,9 +40,13 @@ const Login = () => {
     setError("");
 
     try {
+      // Simple JWT expects 'username' and 'password' fields. The UI collects an email,
+      // which we send as the username so authentication works when using email-based login.
+      const payload = { username: formData.email, password: formData.password };
+
       const response = await fetchJSON("/auth/login/", {
         method: "POST",
-        body: JSON.stringify(formData)
+        body: JSON.stringify(payload)
       });
 
       // Store tokens

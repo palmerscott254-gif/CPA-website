@@ -10,7 +10,7 @@ const getApiBase = () => {
 export const handleGoogleLogin = () => {
   const apiBase = getApiBase();
   // This URL should initiate the Google OAuth flow from the backend
-  const googleAuthInitiateUrl = `${apiBase}/auth/o/google-oauth2/?redirect_uri=${window.location.origin}/google-callback`;
+  const googleAuthInitiateUrl = `${apiBase}/auth/registration/google/?redirect_uri=${window.location.origin}/google-callback`;
   localStorage.setItem('returnUrl', window.location.href);
   window.location.href = googleAuthInitiateUrl;
 };

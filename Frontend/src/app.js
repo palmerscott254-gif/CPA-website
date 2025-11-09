@@ -15,6 +15,7 @@ const Login = lazy(() => import("./pages/login"));
 const Register = lazy(() => import("./pages/register"));
 const Contact = lazy(() => import("./pages/contact"));
 const Missions = lazy(() => import("./pages/missions"));
+const GoogleCallback = lazy(() => import("./pages/GoogleCallback"));
 
 const pageVariants = {
   initial: { opacity: 0, y: 20 },
@@ -126,6 +127,14 @@ export default function App() {
                 element={
                   <PageWrapper>
                     <Missions />
+                  </PageWrapper>
+                } 
+              />
+              <Route 
+                path="/google-callback" 
+                element={
+                  <PageWrapper>
+                    <GoogleCallback />
                   </PageWrapper>
                 } 
               />

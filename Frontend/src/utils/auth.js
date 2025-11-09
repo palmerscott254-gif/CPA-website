@@ -9,9 +9,10 @@ const getApiBase = () => {
 
 export const handleGoogleLogin = () => {
   const apiBase = getApiBase();
-  const googleLoginUrl = `${apiBase}/auth/registration/google/`;
+  // This URL should initiate the Google OAuth flow from the backend
+  const googleAuthInitiateUrl = `${apiBase}/auth/o/google-oauth2/?redirect_uri=${window.location.origin}/google-callback`;
   localStorage.setItem('returnUrl', window.location.href);
-  window.location.href = googleLoginUrl;
+  window.location.href = googleAuthInitiateUrl;
 };
 
 export const exchangeGoogleToken = async (token) => {

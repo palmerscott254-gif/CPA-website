@@ -24,11 +24,7 @@ urlpatterns = [
     path("", api_root, name="api_root"),
     path("admin/", admin.site.urls),
     path("api/auth/", include("users.urls")),
-    # dj-rest-auth endpoints for token, login, logout, password reset, etc.
-    path("api/auth/dj-rest-auth/", include("dj_rest_auth.urls")),
-    # allauth social account URLs
-    path("api/auth/", include("allauth.socialaccount.urls")),
-    # dj-rest-auth registration endpoints, including social auth login/connect
+    path("api/auth/", include("dj_rest_auth.urls")),
     path("api/auth/registration/", include("dj_rest_auth.registration.urls")),
     path("api/subjects/", include("courses.urls")),
     path("api/materials/", include("materials.urls")),

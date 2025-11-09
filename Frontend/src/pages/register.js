@@ -113,7 +113,7 @@ const Register = () => {
     { text: "At least 8 characters", met: formData.password.length >= 8 },
     { text: "Contains uppercase letter", met: /[A-Z]/.test(formData.password) },
     { text: "Contains lowercase letter", met: /[a-z]/.test(formData.password) },
-    { text: "Contains number", met: /\d]/.test(formData.password) }
+    { text: "Contains number", met: /\d/.test(formData.password) }
   ];
 
   return (

@@ -4,13 +4,11 @@ from datetime import timedelta
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-SECRET_KEY = os.getenv("DJANGO_SECRET_KEY", "dev-secret-key")
+SECRET_KEY = os.getenv("DJANGO_SECRET_KEY", "django-insecure-your-new-secret-key")
 DEBUG = os.getenv("DJANGO_DEBUG", "True") == "True"
 
-ALLOWED_HOSTS = ["*"] if DEBUG else [
+ALLOWED_HOSTS = ["localhost", "127.0.0.1"] if DEBUG else [
     "cpa-website-lvup.onrender.com",
-    "localhost",
-    "127.0.0.1",
 ] + (os.getenv("DJANGO_ALLOWED_HOSTS", "").split(",") if os.getenv("DJANGO_ALLOWED_HOSTS") else [])
 
 INSTALLED_APPS = [
@@ -73,8 +71,7 @@ SOCIALACCOUNT_LOGIN_ON_GET = True
 REST_AUTH = {
     'USE_JWT': True,
     'JWT_AUTH_HTTPONLY': False,
-    'LOGIN_SERIALIZER': 'dj_rest_auth.serializers.LoginSerializer',
-    'REGISTER_SERIALIZER': 'dj_rest_auth.registration.serializers.RegisterSerializer',
+    'REGISTER_SERIALIZER': 'users.serializers.RegisterSerializer',
     'USER_DETAILS_SERIALIZER': 'users.serializers.UserSerializer',
 }
 

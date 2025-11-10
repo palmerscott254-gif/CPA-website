@@ -139,6 +139,57 @@ class UserProfileView(APIView):
         return Response(serializer.data)
 
 class GoogleLogin(SocialLoginView):
+    """
+    Social login view for Google.
+
+    Additionally, accept a POST with {'id_token': '...'} so the frontend can send
+    a Google ID token (from the client-side One Tap / OAuth SDK). When an
+    'id_token' is present we verify it with Google's tokeninfo endpoint, create
+    or get the user, and return JWT access/refresh tokens (SimpleJWT).
+    If no 'id_token' is provided, fall back to the normal SocialLoginView
+    behavior which supports code/access_token flows via allauth/dj-rest-auth.
+    """
     adapter_class = GoogleOAuth2Adapter
     callback_url = os.environ.get('GOOGLE_CALLBACK_URL', 'http://localhost:3000/google-callback')
     client_class = OAuth2Client
+
+    def post(self, request, *args, **kwargs):
+        # If frontend sends an id_token (One Tap / @react-oauth/google), handle it here.
+        id_token = request.data.get('id_token')
+        if id_token:
+            # Verify id_token with Google
+            google_client_id = settings.SOCIALACCOUNT_PROVIDERS['google']['APP']['client_id']
+            token_info_url = f"https://oauth2.googleapis.com/tokeninfo?id_token={id_token}"
+            resp = requests.get(token_info_url)
+            if resp.status_code != 200:
+                return Response({"detail": "Invalid Google token"}, status=400)
+            token_info = resp.json()
+            if token_info.get("aud") != google_client_id:
+                return Response({"detail": "Token audience mismatch"}, status=400)
+
+            email = token_info.get("email")
+            if not email:
+                return Response({"detail": "No email in Google token"}, status=400)
+
+            User = get_user_model()
+            user, created = User.objects.get_or_create(email=email, defaults={
+                "username": email,
+                "first_name": token_info.get("given_name", ""),
+                "last_name": token_info.get("family_name", ""),
+            })
+            if created:
+                user.set_unusable_password()
+                user.save()
+
+            # Issue JWT tokens
+            refresh = RefreshToken.for_user(user)
+            access = str(refresh.access_token)
+            user_data = UserSerializer(user).data
+            return Response({
+                "user": user_data,
+                "access": access,
+                "refresh": str(refresh),
+            })
+
+        # Otherwise fall back to default behavior (code/access_token via allauth)
+        return super().post(request, *args, **kwargs)

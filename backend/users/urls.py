@@ -8,6 +8,9 @@ urlpatterns = [
     path("login/", CustomTokenObtainPairView.as_view(), name="token_obtain_pair"),
     path("refresh/", TokenRefreshView.as_view(), name="token_refresh"),
     path("user/", UserProfileView.as_view(), name="user_profile"),
-    path("registration/google/", GoogleLogin.as_view(), name="google_login"),
-    path("google/", google_id_token_login, name="google_id_token_login"),
+    # Social login endpoint for Google. Frontend should POST an id_token to /api/auth/google/
+    # (handled by GoogleLogin.post which accepts {'id_token': '...'})
+    path("google/", GoogleLogin.as_view(), name="google_login"),
+    # Keep a backwards-compatible explicit id_token endpoint (optional)
+    path("google/id-token/", google_id_token_login, name="google_id_token_login"),
 ]

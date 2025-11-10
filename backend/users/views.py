@@ -1,3 +1,62 @@
+from allauth.socialaccount.providers.google.provider import GoogleProvider
+from allauth.socialaccount.models import SocialAccount
+from allauth.socialaccount.helpers import complete_social_login
+from allauth.socialaccount.adapter import get_adapter as get_social_adapter
+from allauth.socialaccount.providers.google.views import GoogleOAuth2Adapter
+from allauth.socialaccount.providers.oauth2.client import OAuth2Error
+from django.contrib.auth import get_user_model
+from django.conf import settings
+import requests
+from rest_framework import status
+from rest_framework.permissions import AllowAny
+from rest_framework.decorators import api_view, permission_classes
+from django.views.decorators.csrf import csrf_exempt
+from rest_framework_simplejwt.tokens import RefreshToken
+
+@csrf_exempt
+@api_view(["POST"])
+@permission_classes([AllowAny])
+def google_id_token_login(request):
+    """
+    Accepts POST with {"id_token": ...}, verifies with Google, logs in/creates user, returns JWT tokens.
+    """
+    id_token = request.data.get("id_token")
+    if not id_token:
+        return Response({"detail": "Missing id_token"}, status=400)
+
+    # Verify id_token with Google
+    google_client_id = settings.SOCIALACCOUNT_PROVIDERS['google']['APP']['client_id']
+    token_info_url = f"https://oauth2.googleapis.com/tokeninfo?id_token={id_token}"
+    resp = requests.get(token_info_url)
+    if resp.status_code != 200:
+        return Response({"detail": "Invalid Google token"}, status=400)
+    token_info = resp.json()
+    if token_info.get("aud") != google_client_id:
+        return Response({"detail": "Token audience mismatch"}, status=400)
+
+    email = token_info.get("email")
+    if not email:
+        return Response({"detail": "No email in Google token"}, status=400)
+
+    User = get_user_model()
+    user, created = User.objects.get_or_create(email=email, defaults={
+        "username": email,
+        "first_name": token_info.get("given_name", ""),
+        "last_name": token_info.get("family_name", ""),
+    })
+    if created:
+        user.set_unusable_password()
+        user.save()
+
+    # Issue JWT tokens
+    refresh = RefreshToken.for_user(user)
+    access = str(refresh.access_token)
+    user_data = UserSerializer(user).data
+    return Response({
+        "user": user_data,
+        "access": access,
+        "refresh": str(refresh),
+    })
 from rest_framework import generics, permissions
 from .serializers import RegisterSerializer, UserSerializer
 from .models import User

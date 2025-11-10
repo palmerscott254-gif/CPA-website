@@ -157,10 +157,13 @@ SIMPLE_JWT = {
     "AUTH_HEADER_TYPES": ("Bearer",),
 }
 
+
+# Add your Vercel frontend domain below (replace the placeholder if needed)
 CORS_ALLOWED_ORIGINS = [
     "http://localhost:3000",
     "http://127.0.0.1:3000",
     "https://cpa-website-1.onrender.com",
+    "https://your-vercel-app.vercel.app",
 ]
 
 if os.getenv("CORS_ALLOWED_ORIGINS"):
@@ -173,4 +176,5 @@ CORS_ALLOW_CREDENTIALS = True
 CSRF_TRUSTED_ORIGINS = [
     "https://cpa-website-1.onrender.com",
     "https://cpa-website-lvup.onrender.com",
+    "https://your-vercel-app.vercel.app",
 ]

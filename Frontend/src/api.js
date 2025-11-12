@@ -200,7 +200,7 @@ export async function fetchJSON(path, opts = {}) {
 
 export async function downloadFile(path) {
   try {
-    const response = await apiClient.download(path); // Use the new download method
+    let response = await apiClient.download(path); // Use the new download method
 
     const blob = await response.blob();
     const blobUrl = window.URL.createObjectURL(blob);
@@ -221,7 +221,40 @@ export async function downloadFile(path) {
     link.remove();
     window.URL.revokeObjectURL(blobUrl);
   } catch (error) {
-    // apiClient.download should handle 401 redirects, but other errors might still occur
+    // If the primary route 404s and the path matches the /materials/:id/download/ shape,
+    // try the alternate route /materials/download/:id/ once to be more forgiving.
+    if (error?.status === 404) {
+      const m = path.match(/^\/materials\/(\d+)\/download\/?$/);
+      if (m) {
+        const altPath = `/materials/download/${m[1]}/`;
+        try {
+          const response = await apiClient.download(altPath);
+          const blob = await response.blob();
+          const blobUrl = window.URL.createObjectURL(blob);
+          const link = document.createElement("a");
+          link.href = blobUrl;
+
+          let filename = altPath.split("/").pop() || "download";
+          const cd = response.headers.get("Content-Disposition");
+          if (cd) {
+            const match = cd.match(/filename\*?=(?:UTF-8'')?"?([^";]+)"?/);
+            if (match && match[1]) filename = decodeURIComponent(match[1]);
+          }
+
+          link.download = filename;
+          document.body.appendChild(link);
+          link.click();
+          link.remove();
+          window.URL.revokeObjectURL(blobUrl);
+          return; // success via fallback
+        } catch (fallbackErr) {
+          console.error("Download fallback failed:", fallbackErr);
+          throw fallbackErr;
+        }
+      }
+    }
+
+    // apiClient.download handles 401 redirects; rethrow others
     console.error("Download error in downloadFile:", error);
     throw error; // Re-throw to be caught by the calling component
   }

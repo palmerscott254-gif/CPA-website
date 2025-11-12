@@ -144,6 +144,14 @@ export class ApiClient {
         headers,
       });
 
+      // If unauthorized and there's no refresh token, redirect to login immediately
+      if (response.status === 401 && !localStorage.getItem("refresh_token")) {
+        window.location.href = "/login";
+        const err = new Error("Unauthorized");
+        err.status = 401;
+        throw err;
+      }
+
       // If unauthorized and we have a refresh token, try to refresh
       if (response.status === 401 && localStorage.getItem("refresh_token")) {
         try {

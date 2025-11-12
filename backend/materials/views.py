@@ -24,6 +24,10 @@ class MaterialListView(generics.ListAPIView):
         sort = self.request.query_params.get("sort")
         if sort == "downloads":
             qs = qs.order_by("-download_count")
+        elif sort == "title":
+            qs = qs.order_by("title")
+        elif sort == "date":
+            qs = qs.order_by("-upload_date")
         return qs
 
 

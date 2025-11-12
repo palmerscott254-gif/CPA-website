@@ -77,6 +77,10 @@ const Materials = () => {
       // Optionally, refresh materials list to update download count
       // fetchJSON("/materials/").then(data => setMaterials(data.results));
     } catch (err) {
+      if (err?.status === 401) {
+        window.location.href = "/login";
+        return;
+      }
       logger.error("Download error:", err);
       setDownloadStatus(prev => ({ ...prev, [material.id]: "error" }));
       // The apiClient.download method should handle 401 redirects.

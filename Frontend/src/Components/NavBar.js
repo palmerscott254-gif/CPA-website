@@ -160,7 +160,7 @@ const NavBar = () => {
                   className="flex items-center space-x-2 px-4 py-2 rounded-xl bg-primary-100 dark:bg-primary-900/30 text-primary-700 dark:text-primary-300 hover:bg-primary-200 dark:hover:bg-primary-900/50 transition-all duration-300 focus-ring"
                 >
                   <User className="w-4 h-4" />
-                  <span className="font-medium">
+                  <span className="font-medium text-sm md:text-base truncate">
                     {user?.username || "User"}
                   </span>
                   <ChevronDown className="w-4 h-4" />

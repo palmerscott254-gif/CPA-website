@@ -367,8 +367,7 @@ const Home = () => {
                   </h3>
 
                   <p className="text-gray-600 dark:text-gray-300 mb-6 leading-relaxed">
-                    Master the fundamentals and advanced concepts of {subject.name.toLowerCase()} 
-                    with our comprehensive curriculum.
+                    Master the fundamentals and advanced concepts of {subject.name.toLowerCase()} with our comprehensive curriculum.
                   </p>
 
                   <div className="flex items-center justify-between mb-6">

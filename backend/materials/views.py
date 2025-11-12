@@ -4,7 +4,7 @@ from .serializers import MaterialSerializer
 from rest_framework.response import Response
 from django.shortcuts import get_object_or_404
 from rest_framework.parsers import MultiPartParser, FormParser
-from django.http import FileResponse, Http404
+from django.http import HttpResponseRedirect, FileResponse, Http404
 from rest_framework.decorators import api_view, permission_classes
 from django.db.models import F, Q
 import os
@@ -63,22 +63,9 @@ def material_download_view(request, pk):
         if not (request.user.is_staff or request.user.is_superuser or material.uploaded_by == request.user):
             return Response({"detail": "Not allowed"}, status=status.HTTP_403_FORBIDDEN)
 
-    file_path = material.file.path
-    if not os.path.exists(file_path):
-        logger.error(
-            "Material file missing on disk", extra={
-                "material_id": material.pk,
-                "expected_path": file_path,
-            }
-        )
-        return Response({"detail": "File not found"}, status=status.HTTP_404_NOT_FOUND)
-
+    # Increment download count
     Material.objects.filter(pk=material.pk).update(download_count=F("download_count") + 1)
 
-    filename = os.path.basename(file_path)
-    logger.info(f"Serving download for material {material.pk}: {filename}")
-    
-    response = FileResponse(open(file_path, "rb"), as_attachment=True, filename=filename)
-    # Explicitly set Content-Type for better browser compatibility
-    response['Content-Type'] = 'application/octet-stream'
-    return response
+    # Redirect to the file's URL
+    logger.info(f"Redirecting to download for material {material.pk}: {material.file.name}")
+    return HttpResponseRedirect(material.file.url)

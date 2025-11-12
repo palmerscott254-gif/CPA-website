@@ -46,12 +46,19 @@ class MaterialCreateView(generics.CreateAPIView):
 
 
 @api_view(["GET"])
-@permission_classes([permissions.IsAuthenticated])
+@permission_classes([permissions.AllowAny])
 def material_download_view(request, pk):
     material = get_object_or_404(Material, pk=pk)
 
-    if not material.is_public and not (request.user.is_admin or material.uploaded_by == request.user):
-        return Response({"detail": "Not allowed"}, status=status.HTTP_403_FORBIDDEN)
+    # Allow public materials for anonymous users. Only require authentication
+    # when the material is not public. Use is_staff/superuser instead of
+    # a non-standard `is_admin` attribute.
+    if not material.is_public:
+        # If the user is not authenticated or not the uploader/staff, deny.
+        if not request.user.is_authenticated or not (
+            request.user.is_staff or request.user.is_superuser or material.uploaded_by == request.user
+        ):
+            return Response({"detail": "Not allowed"}, status=status.HTTP_403_FORBIDDEN)
 
     file_path = material.file.path
     if not os.path.exists(file_path):

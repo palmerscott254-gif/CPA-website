@@ -140,35 +140,55 @@ export async function fetchJSON(path, opts = {}) {
   return apiClient.request(path, opts);
 }
 
-export function downloadFile(path, token) {
+export async function downloadFile(path) {
   const url = `${API_BASE}${path}`;
-  const headers = token ? { Authorization: `Bearer ${token}` } : {};
-  
-  return fetch(url, { headers })
-    .then(response => {
-      if (!response.ok) {
-        throw new Error(`Download failed: ${response.status}`);
-      }
-      return response.blob();
-    })
-    .then(blob => {
-      const blobUrl = window.URL.createObjectURL(blob);
-      const link = document.createElement("a");
-      link.href = blobUrl;
-      
-      // Extract filename from path or use default
-      const filename = path.split("/").pop() || "download.pdf";
-      link.download = filename;
-      
-      document.body.appendChild(link);
-      link.click();
-      link.remove();
-      window.URL.revokeObjectURL(blobUrl);
-    })
-    .catch(error => {
-      // Error is thrown to be handled by caller
-      throw error;
-    });
+
+  // Helper to perform the fetch with current access token header (if present)
+  const doFetch = async () => {
+    const token = localStorage.getItem("access_token");
+    const headers = token ? { Authorization: `Bearer ${token}` } : {};
+    return fetch(url, { headers });
+  };
+
+  let response = await doFetch();
+
+  // If unauthorized and we have a refresh token, try to refresh and retry once
+  if (response.status === 401 && localStorage.getItem("refresh_token")) {
+    try {
+      await apiClient.refreshToken();
+      response = await doFetch();
+    } catch (err) {
+      // Refresh failed - clear tokens and redirect to login for a clean UX
+      localStorage.removeItem("access_token");
+      localStorage.removeItem("refresh_token");
+      window.location.href = "/login";
+      throw err;
+    }
+  }
+
+  if (!response.ok) {
+    throw new Error(`Download failed: ${response.status}`);
+  }
+
+  const blob = await response.blob();
+  const blobUrl = window.URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.href = blobUrl;
+
+  // Extract filename from Content-Disposition header if provided, otherwise from path
+  let filename = path.split("/").pop() || "download";
+  const cd = response.headers.get("Content-Disposition");
+  if (cd) {
+    const match = cd.match(/filename\*?=(?:UTF-8'')?"?([^";]+)"?/);
+    if (match && match[1]) filename = decodeURIComponent(match[1]);
+  }
+
+  link.download = filename;
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+  window.URL.revokeObjectURL(blobUrl);
+}
 }
 
 // Export the API client for new code

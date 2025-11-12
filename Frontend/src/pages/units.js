@@ -38,6 +38,9 @@ const Units = () => {
   });
 
   useEffect(() => {
+    // Scroll to top after navigation so the page doesn't appear scrolled to footer
+    if (typeof window !== 'undefined') window.scrollTo(0, 0);
+
     const params = new URLSearchParams(location.search);
     const subject = params.get('subject');
     let url = "/subjects/units/";

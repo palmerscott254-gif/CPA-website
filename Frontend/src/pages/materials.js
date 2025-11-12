@@ -50,6 +50,9 @@ const Materials = () => {
     
     if (params.toString()) url += "?" + params.toString();
 
+    // Ensure we start at the top when navigating to this view / applying filters
+    if (typeof window !== "undefined") window.scrollTo(0, 0);
+
     fetchJSON(url)
       .then(data => {
         // Handle paginated response - data.results is the array
@@ -66,10 +69,8 @@ const Materials = () => {
 
   const handleDownload = async (material) => {
     setDownloading(material.id);
-    const token = localStorage.getItem("access_token");
-    
     try {
-      await downloadFile(`/materials/${material.id}/download/`, token);
+      await downloadFile(`/materials/${material.id}/download/`);
       // Show success message or update download count
     } catch (err) {
       alert("Download failed. Please make sure you're logged in.");

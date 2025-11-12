@@ -35,6 +35,9 @@ const UnitDetail = () => {
   });
 
   useEffect(() => {
+    // Scroll to top when navigating to a unit detail
+    if (typeof window !== 'undefined') window.scrollTo(0, 0);
+
     // Fetch unit details and materials
     Promise.all([
       fetchJSON(`/subjects/units/`).then(data => {
@@ -62,10 +65,8 @@ const UnitDetail = () => {
 
   const handleDownload = async (material) => {
     setDownloading(material.id);
-    const token = localStorage.getItem("access_token");
-    
     try {
-      await downloadFile(`/materials/${material.id}/download/`, token);
+      await downloadFile(`/materials/${material.id}/download/`);
     } catch (err) {
       alert("Download failed. Please make sure you're logged in.");
       logger.error("Download error:", err);

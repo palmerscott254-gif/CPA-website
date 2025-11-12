@@ -23,7 +23,6 @@ const UnitDetail = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [downloading, setDownloading] = useState(null);
-  const [downloadStatus, setDownloadStatus] = useState({}); // { materialId: "success" | "error" | "downloading" }
 
   const [headerRef, headerInView] = useInView({
     triggerOnce: true,
@@ -66,10 +65,8 @@ const UnitDetail = () => {
 
   const handleDownload = async (material) => {
     setDownloading(material.id);
-    setDownloadStatus(prev => ({ ...prev, [material.id]: "downloading" }));
     try {
       await downloadFile(`/materials/${material.id}/download/`);
-      setDownloadStatus(prev => ({ ...prev, [material.id]: "success" }));
     } catch (err) {
       // If unauthorized, redirect to login
       if (err?.status === 401) {
@@ -77,13 +74,8 @@ const UnitDetail = () => {
         return;
       }
       logger.error("Download error:", err);
-      setDownloadStatus(prev => ({ ...prev, [material.id]: "error" }));
     } finally {
       setDownloading(null);
-      // Clear the status after a short delay
-      setTimeout(() => {
-        setDownloadStatus(prev => ({ ...prev, [material.id]: undefined }));
-      }, 3000);
     }
   };
 
@@ -125,33 +117,33 @@ const UnitDetail = () => {
 
   const containerVariants = {
     hidden: { opacity: 0 },
-                            <button
-                              onClick={() => handleDownload(material)}
-                              disabled={downloading === material.id}
-                              className="btn-primary py-2 px-6 inline-flex items-center text-sm disabled:opacity-50 disabled:cursor-not-allowed"
-                            >
-                              {downloadStatus[material.id] === "downloading" ? (
-                                <>
-                                  <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2"></div>
-                                  Downloading...
-                                </>
-                              ) : downloadStatus[material.id] === "success" ? (
-                                <>
-                                  <CheckCircle className="w-4 h-4 mr-2" />
-                                  Download Complete
-                                </>
-                              ) : downloadStatus[material.id] === "error" ? (
-                                <>
-                                  <AlertCircle className="w-4 h-4 mr-2" />
-                                  Download Failed
-                                </>
-                              ) : (
-                                <>
-                                  <ArrowDown className="w-4 h-4 mr-2" />
-                                  Download
-                                </>
-                              )}
-                            </button>
+    visible: {
+      opacity: 1,
+      transition: {
+        staggerChildren: 0.1
+      }
+    }
+  };
+
+  const itemVariants = {
+    hidden: { opacity: 0, y: 20 },
+    visible: {
+      opacity: 1,
+      y: 0,
+      transition: {
+        duration: 0.6,
+        ease: "easeOut"
+      }
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          className="text-center"
         >
           <div className="w-16 h-16 border-4 border-primary-200 border-t-primary-600 rounded-full animate-spin mx-auto mb-4"></div>
           <p className="text-gray-600 dark:text-gray-400 text-lg">Loading unit details...</p>

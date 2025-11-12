@@ -189,7 +189,6 @@ export async function downloadFile(path) {
   link.remove();
   window.URL.revokeObjectURL(blobUrl);
 }
-}
 
 // Export the API client for new code
 export default apiClient;

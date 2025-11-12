@@ -53,6 +53,7 @@ class MaterialCreateView(generics.CreateAPIView):
 @api_view(["GET"])
 @permission_classes([permissions.IsAuthenticated])
 def material_download_view(request, pk):
+    logger = logging.getLogger(__name__)
     material = get_object_or_404(Material, pk=pk)
 
     # Allow public materials for authenticated users. Only require additional permissions
@@ -64,7 +65,7 @@ def material_download_view(request, pk):
 
     file_path = material.file.path
     if not os.path.exists(file_path):
-        logging.getLogger(__name__).error(
+        logger.error(
             "Material file missing on disk", extra={
                 "material_id": material.pk,
                 "expected_path": file_path,
@@ -74,4 +75,10 @@ def material_download_view(request, pk):
 
     Material.objects.filter(pk=material.pk).update(download_count=F("download_count") + 1)
 
-    return FileResponse(open(file_path, "rb"), as_attachment=True, filename=os.path.basename(file_path))
+    filename = os.path.basename(file_path)
+    logger.info(f"Serving download for material {material.pk}: {filename}")
+    
+    response = FileResponse(open(file_path, "rb"), as_attachment=True, filename=filename)
+    # Explicitly set Content-Type for better browser compatibility
+    response['Content-Type'] = 'application/octet-stream'
+    return response

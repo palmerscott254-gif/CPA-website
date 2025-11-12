@@ -202,7 +202,20 @@ export async function downloadFile(path) {
   try {
     let response = await apiClient.download(path); // Use the new download method
 
+    // Check if response is JSON (error case) vs blob (success)
+    const contentType = response.headers.get('content-type');
+    if (contentType && contentType.includes('application/json')) {
+      const errorData = await response.json();
+      throw new Error(errorData.detail || 'Download failed');
+    }
+
     const blob = await response.blob();
+    
+    // Verify blob has content
+    if (blob.size === 0) {
+      throw new Error('Downloaded file is empty');
+    }
+    
     const blobUrl = window.URL.createObjectURL(blob);
     const link = document.createElement("a");
     link.href = blobUrl;
@@ -229,7 +242,19 @@ export async function downloadFile(path) {
         const altPath = `/materials/download/${m[1]}/`;
         try {
           const response = await apiClient.download(altPath);
+          
+          const contentType = response.headers.get('content-type');
+          if (contentType && contentType.includes('application/json')) {
+            const errorData = await response.json();
+            throw new Error(errorData.detail || 'Download failed');
+          }
+          
           const blob = await response.blob();
+          
+          if (blob.size === 0) {
+            throw new Error('Downloaded file is empty');
+          }
+          
           const blobUrl = window.URL.createObjectURL(blob);
           const link = document.createElement("a");
           link.href = blobUrl;

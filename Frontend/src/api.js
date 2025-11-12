@@ -130,6 +130,56 @@ export class ApiClient {
   async delete(path, options = {}) {
     return this.request(path, { ...options, method: "DELETE" });
   }
+  async download(path, options = {}) {
+    const url = `${this.baseURL}${path}`;
+    const headers = {
+      ...this.getAuthHeaders(),
+      ...(options.headers || {}),
+    };
+
+    let response;
+    try {
+      response = await fetch(url, {
+        ...options,
+        headers,
+      });
+
+      // If unauthorized and we have a refresh token, try to refresh
+      if (response.status === 401 && localStorage.getItem("refresh_token")) {
+        try {
+          await this.refreshToken();
+          // Retry the request with new token
+          headers.Authorization = `Bearer ${localStorage.getItem("access_token")}`;
+          response = await fetch(url, {
+            ...options,
+            headers,
+          });
+        } catch (refreshError) {
+          // Redirect to login if refresh fails
+          window.location.href = "/login";
+          throw refreshError;
+        }
+      }
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => null);
+        const error = new Error(errorData?.detail || `HTTP ${response.status} Error`);
+        error.status = response.status;
+        error.data = errorData;
+        throw error;
+      }
+
+      return response; // Return the raw response for blob handling
+    } catch (error) {
+      if (error.status) {
+        throw error;
+      }
+      const networkError = new Error("Network error - please check your connection");
+      networkError.status = 0;
+      networkError.data = null;
+      throw networkError;
+    }
+  }
 }
 
 // Create a singleton instance
@@ -141,53 +191,32 @@ export async function fetchJSON(path, opts = {}) {
 }
 
 export async function downloadFile(path) {
-  const url = `${API_BASE}${path}`;
+  try {
+    const response = await apiClient.download(path); // Use the new download method
 
-  // Helper to perform the fetch with current access token header (if present)
-  const doFetch = async () => {
-    const token = localStorage.getItem("access_token");
-    const headers = token ? { Authorization: `Bearer ${token}` } : {};
-    return fetch(url, { headers });
-  };
+    const blob = await response.blob();
+    const blobUrl = window.URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = blobUrl;
 
-  let response = await doFetch();
-
-  // If unauthorized and we have a refresh token, try to refresh and retry once
-  if (response.status === 401 && localStorage.getItem("refresh_token")) {
-    try {
-      await apiClient.refreshToken();
-      response = await doFetch();
-    } catch (err) {
-      // Refresh failed - clear tokens and redirect to login for a clean UX
-      localStorage.removeItem("access_token");
-      localStorage.removeItem("refresh_token");
-      window.location.href = "/login";
-      throw err;
+    // Extract filename from Content-Disposition header if provided, otherwise from path
+    let filename = path.split("/").pop() || "download";
+    const cd = response.headers.get("Content-Disposition");
+    if (cd) {
+      const match = cd.match(/filename\*?=(?:UTF-8'')?"?([^";]+)"?/);
+      if (match && match[1]) filename = decodeURIComponent(match[1]);
     }
+
+    link.download = filename;
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    window.URL.revokeObjectURL(blobUrl);
+  } catch (error) {
+    // apiClient.download should handle 401 redirects, but other errors might still occur
+    console.error("Download error in downloadFile:", error);
+    throw error; // Re-throw to be caught by the calling component
   }
-
-  if (!response.ok) {
-    throw new Error(`Download failed: ${response.status}`);
-  }
-
-  const blob = await response.blob();
-  const blobUrl = window.URL.createObjectURL(blob);
-  const link = document.createElement("a");
-  link.href = blobUrl;
-
-  // Extract filename from Content-Disposition header if provided, otherwise from path
-  let filename = path.split("/").pop() || "download";
-  const cd = response.headers.get("Content-Disposition");
-  if (cd) {
-    const match = cd.match(/filename\*?=(?:UTF-8'')?"?([^";]+)"?/);
-    if (match && match[1]) filename = decodeURIComponent(match[1]);
-  }
-
-  link.download = filename;
-  document.body.appendChild(link);
-  link.click();
-  link.remove();
-  window.URL.revokeObjectURL(blobUrl);
 }
 
 // Export the API client for new code

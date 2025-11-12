@@ -27,6 +27,7 @@ const Materials = () => {
   const [viewMode, setViewMode] = useState("grid");
   const [filterType, setFilterType] = useState("all");
   const [downloading, setDownloading] = useState(null);
+  const [downloadStatus, setDownloadStatus] = useState({}); // { materialId: "success" | "error" | "downloading" }
   const [searchParams] = useSearchParams();
   const unitFilter = searchParams.get("unit");
 
@@ -69,14 +70,23 @@ const Materials = () => {
 
   const handleDownload = async (material) => {
     setDownloading(material.id);
+    setDownloadStatus(prev => ({ ...prev, [material.id]: "downloading" }));
     try {
       await downloadFile(`/materials/${material.id}/download/`);
-      // Show success message or update download count
+      setDownloadStatus(prev => ({ ...prev, [material.id]: "success" }));
+      // Optionally, refresh materials list to update download count
+      // fetchJSON("/materials/").then(data => setMaterials(data.results));
     } catch (err) {
-      alert("Download failed. Please make sure you're logged in.");
       logger.error("Download error:", err);
+      setDownloadStatus(prev => ({ ...prev, [material.id]: "error" }));
+      // The apiClient.download method should handle 401 redirects.
+      // For other errors, we can show a more specific message if needed.
     } finally {
       setDownloading(null);
+      // Optionally, clear success/error status after a few seconds
+      setTimeout(() => {
+        setDownloadStatus(prev => ({ ...prev, [material.id]: undefined }));
+      }, 3000);
     }
   };
 
@@ -383,10 +393,20 @@ const Materials = () => {
                           disabled={downloading === material.id}
                           className="w-full btn-primary py-3 inline-flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed"
                         >
-                          {downloading === material.id ? (
+                          {downloadStatus[material.id] === "downloading" ? (
                             <>
                               <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2"></div>
                               Downloading...
+                            </>
+                          ) : downloadStatus[material.id] === "success" ? (
+                            <>
+                              <CheckCircle className="w-4 h-4 mr-2" />
+                              Download Complete
+                            </>
+                          ) : downloadStatus[material.id] === "error" ? (
+                            <>
+                              <AlertCircle className="w-4 h-4 mr-2" />
+                              Download Failed
                             </>
                           ) : (
                             <>
@@ -454,10 +474,20 @@ const Materials = () => {
                               disabled={downloading === material.id}
                               className="btn-primary py-2 px-6 inline-flex items-center text-sm disabled:opacity-50 disabled:cursor-not-allowed"
                             >
-                              {downloading === material.id ? (
+                              {downloadStatus[material.id] === "downloading" ? (
                                 <>
                                   <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2"></div>
                                   Downloading...
+                                </>
+                              ) : downloadStatus[material.id] === "success" ? (
+                                <>
+                                  <CheckCircle className="w-4 h-4 mr-2" />
+                                  Download Complete
+                                </>
+                              ) : downloadStatus[material.id] === "error" ? (
+                                <>
+                                  <AlertCircle className="w-4 h-4 mr-2" />
+                                  Download Failed
                                 </>
                               ) : (
                                 <>

@@ -8,6 +8,7 @@ from django.http import FileResponse, Http404
 from rest_framework.decorators import api_view, permission_classes
 from django.db.models import F, Q
 import os
+import logging
 
 class MaterialListView(generics.ListAPIView):
     serializer_class = MaterialSerializer
@@ -63,7 +64,13 @@ def material_download_view(request, pk):
 
     file_path = material.file.path
     if not os.path.exists(file_path):
-        raise Http404
+        logging.getLogger(__name__).error(
+            "Material file missing on disk", extra={
+                "material_id": material.pk,
+                "expected_path": file_path,
+            }
+        )
+        return Response({"detail": "File not found"}, status=status.HTTP_404_NOT_FOUND)
 
     Material.objects.filter(pk=material.pk).update(download_count=F("download_count") + 1)
 

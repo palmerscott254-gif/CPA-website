@@ -74,6 +74,7 @@ const UnitDetail = () => {
         return;
       }
       logger.error("Download error:", err);
+      alert(err?.message || "Download failed. Please try again.");
     } finally {
       setDownloading(null);
     }

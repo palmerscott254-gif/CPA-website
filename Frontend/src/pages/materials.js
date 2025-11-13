@@ -82,6 +82,8 @@ const Materials = () => {
         return;
       }
       logger.error("Download error:", err);
+      // Basic alert as a user-visible error; can be replaced with a toast lib later
+      alert(err?.message || "Download failed. Please try again.");
       setDownloadStatus(prev => ({ ...prev, [material.id]: "error" }));
       // The apiClient.download method should handle 401 redirects.
       // For other errors, we can show a more specific message if needed.

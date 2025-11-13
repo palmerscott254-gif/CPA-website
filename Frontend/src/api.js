@@ -199,89 +199,104 @@ export async function fetchJSON(path, opts = {}) {
 }
 
 export async function downloadFile(path) {
-  try {
-    let response = await apiClient.download(path); // Use the new download method
+  const isIOS = typeof navigator !== 'undefined' && /iPad|iPhone|iPod/.test(navigator.userAgent);
+  const isSafari = typeof navigator !== 'undefined' && /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
 
-    // Check if response is JSON (error case) vs blob (success)
-    const contentType = response.headers.get('content-type');
-    if (contentType && contentType.includes('application/json')) {
-      const errorData = await response.json();
-      throw new Error(errorData.detail || 'Download failed');
+  const triggerDownload = (blob, fallbackFilename) => {
+    const filename = fallbackFilename || 'download';
+
+    // IE/Edge legacy
+    if (typeof window.navigator.msSaveOrOpenBlob !== 'undefined') {
+      window.navigator.msSaveOrOpenBlob(blob, filename);
+      return;
     }
 
-    const blob = await response.blob();
-    
-    // Verify blob has content
-    if (blob.size === 0) {
-      throw new Error('Downloaded file is empty');
-    }
-    
     const blobUrl = window.URL.createObjectURL(blob);
-    const link = document.createElement("a");
-    link.href = blobUrl;
 
-    // Extract filename from Content-Disposition header if provided, otherwise from path
-    let filename = path.split("/").pop() || "download";
-    const cd = response.headers.get("Content-Disposition");
-    if (cd) {
-      const match = cd.match(/filename\*?=(?:UTF-8'')?"?([^";]+)"?/);
-      if (match && match[1]) filename = decodeURIComponent(match[1]);
+    // iOS Safari cannot use the download attribute reliably
+    if (isIOS || (isSafari && typeof document.createElement('a').download === 'undefined')) {
+      const win = window.open();
+      if (win) {
+        win.location.href = blobUrl;
+      } else {
+        window.location.href = blobUrl;
+      }
+      // Revoke later to avoid iOS timing issues
+      setTimeout(() => window.URL.revokeObjectURL(blobUrl), 60000);
+      return;
     }
 
+    const link = document.createElement('a');
+    link.href = blobUrl;
     link.download = filename;
+    link.rel = 'noopener';
+    link.style.display = 'none';
     document.body.appendChild(link);
     link.click();
     link.remove();
     window.URL.revokeObjectURL(blobUrl);
+  };
+
+  const extractFilename = (pathOrHeader, headerValue) => {
+    let filename = pathOrHeader.split('/').pop() || 'download';
+    const cd = headerValue || '';
+    const match = cd.match(/filename\*?=(?:UTF-8'')?"?([^";]+)"?/);
+    if (match && match[1]) filename = decodeURIComponent(match[1]);
+    return filename;
+  };
+
+  const downloadFromResponse = async (response, originalPath) => {
+    const contentType = response.headers.get('content-type');
+    // Handle JSON success where API returns a presigned URL for cloud storage
+    if (contentType && contentType.includes('application/json')) {
+      const data = await response.json();
+      if (data && data.download_url) {
+        const urlResp = await fetch(data.download_url);
+        if (!urlResp.ok) {
+          throw new Error(`Failed to fetch presigned URL: HTTP ${urlResp.status}`);
+        }
+        const blob = await urlResp.blob();
+        if (!blob || blob.size === 0) throw new Error('Downloaded file is empty');
+        const filename = extractFilename(originalPath, urlResp.headers.get('Content-Disposition') || urlResp.headers.get('content-disposition'));
+        triggerDownload(blob, filename);
+        return;
+      }
+      // JSON error
+      const detail = data?.detail || 'Download failed';
+      const err = new Error(detail);
+      err.status = response.status;
+      throw err;
+    }
+
+    // Binary response path
+    const blob = await response.blob();
+    if (!blob || blob.size === 0) throw new Error('Downloaded file is empty');
+    const filename = extractFilename(originalPath, response.headers.get('Content-Disposition') || response.headers.get('content-disposition'));
+    triggerDownload(blob, filename);
+  };
+
+  try {
+    let response = await apiClient.download(path);
+    await downloadFromResponse(response, path);
   } catch (error) {
-    // If the primary route 404s and the path matches the /materials/:id/download/ shape,
-    // try the alternate route /materials/download/:id/ once to be more forgiving.
+    // Fallback to alternate route on 404
     if (error?.status === 404) {
       const m = path.match(/^\/materials\/(\d+)\/download\/?$/);
       if (m) {
         const altPath = `/materials/download/${m[1]}/`;
         try {
           const response = await apiClient.download(altPath);
-          
-          const contentType = response.headers.get('content-type');
-          if (contentType && contentType.includes('application/json')) {
-            const errorData = await response.json();
-            throw new Error(errorData.detail || 'Download failed');
-          }
-          
-          const blob = await response.blob();
-          
-          if (blob.size === 0) {
-            throw new Error('Downloaded file is empty');
-          }
-          
-          const blobUrl = window.URL.createObjectURL(blob);
-          const link = document.createElement("a");
-          link.href = blobUrl;
-
-          let filename = altPath.split("/").pop() || "download";
-          const cd = response.headers.get("Content-Disposition");
-          if (cd) {
-            const match = cd.match(/filename\*?=(?:UTF-8'')?"?([^";]+)"?/);
-            if (match && match[1]) filename = decodeURIComponent(match[1]);
-          }
-
-          link.download = filename;
-          document.body.appendChild(link);
-          link.click();
-          link.remove();
-          window.URL.revokeObjectURL(blobUrl);
+          await downloadFromResponse(response, altPath);
           return; // success via fallback
         } catch (fallbackErr) {
-          console.error("Download fallback failed:", fallbackErr);
+          console.error('Download fallback failed:', fallbackErr);
           throw fallbackErr;
         }
       }
     }
 
-    // apiClient.download handles 401 redirects; rethrow others
-    console.error("Download error in downloadFile:", error);
-    throw error; // Re-throw to be caught by the calling component
+    console.error('Download error in downloadFile:', error);
+    throw error;
   }
 }
 

@@ -1,8 +1,8 @@
 from django.contrib import admin
-from django.urls import path, include
+from django.urls import path, include, re_path
 from django.conf import settings
-from django.conf.urls.static import static
 from django.http import JsonResponse
+from django.views.static import serve
 
 # Import admin configuration to apply custom headers and titles
 from . import custom_admin
@@ -31,6 +31,15 @@ urlpatterns = [
     path("api/quizzes/", include("quizzes.urls")),
 ]
 
-from django.urls import path, include
-from django.conf.urls.static import static
-urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
+# Serve media files. This is not recommended for production environments.
+# A better approach is to use a dedicated file storage service like AWS S3 or Google Cloud Storage,
+# and have Nginx or another web server serve the files directly.
+# However, for simplicity on platforms like Render, this will work.
+if settings.DEBUG:
+    from django.conf.urls.static import static
+    urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
+else:
+    urlpatterns += [
+        re_path(r'^%s(?P<path>.*)$' % settings.MEDIA_URL.lstrip('/'), serve, {'document_root': settings.MEDIA_ROOT}),
+    ]
+

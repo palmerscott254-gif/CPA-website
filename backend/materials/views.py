@@ -61,11 +61,20 @@ def material_download_view(request, pk):
     if not material.is_public:
         # If the user is not staff/superuser or the uploader, deny.
         if not (request.user.is_staff or request.user.is_superuser or material.uploaded_by == request.user):
-            return Response({"detail": "Not allowed"}, status=status.HTTP_403_FORBIDDEN)
+            return Response({"detail": "Not allowed"}, status=status.HTTP_403_FORBIDEN)
 
     # Increment download count
     Material.objects.filter(pk=material.pk).update(download_count=F("download_count") + 1)
 
-    # Redirect to the file's URL
-    logger.info(f"Redirecting to download for material {material.pk}: {material.file.name}")
-    return HttpResponseRedirect(material.file.url)
+    # Serve the file directly using FileResponse
+    try:
+        file_handle = material.file.open('rb')
+        response = FileResponse(file_handle, as_attachment=True, filename=material.file.name)
+        logger.info(f"Serving download for material {material.pk}: {material.file.name}")
+        return response
+    except FileNotFoundError:
+        logger.error(f"File not found for material {material.pk}: {material.file.path}")
+        raise Http404("File not found.")
+    except Exception as e:
+        logger.error(f"Error serving file for material {material.pk}: {e}")
+        return Response({"detail": "Error serving file."}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)

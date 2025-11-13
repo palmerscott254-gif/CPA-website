@@ -131,7 +131,8 @@ export class ApiClient {
     return this.request(path, { ...options, method: "DELETE" });
   }
   async download(path, options = {}) {
-    const url = `${this.baseURL}${path}`;
+    const isAbsolute = /^https?:\/\//i.test(path);
+    const url = isAbsolute ? path : `${this.baseURL}${path}`;
     const headers = {
       ...this.getAuthHeaders(),
       ...(options.headers || {}),
@@ -145,7 +146,7 @@ export class ApiClient {
       });
 
       // If unauthorized and there's no refresh token, redirect to login immediately
-      if (response.status === 401 && !localStorage.getItem("refresh_token")) {
+      if (!isAbsolute && response.status === 401 && !localStorage.getItem("refresh_token")) {
         window.location.href = "/login";
         const err = new Error("Unauthorized");
         err.status = 401;
@@ -153,7 +154,7 @@ export class ApiClient {
       }
 
       // If unauthorized and we have a refresh token, try to refresh
-      if (response.status === 401 && localStorage.getItem("refresh_token")) {
+      if (!isAbsolute && response.status === 401 && localStorage.getItem("refresh_token")) {
         try {
           await this.refreshToken();
           // Retry the request with new token

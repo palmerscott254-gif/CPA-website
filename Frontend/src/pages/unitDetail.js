@@ -66,7 +66,15 @@ const UnitDetail = () => {
   const handleDownload = async (material) => {
     setDownloading(material.id);
     try {
-      await downloadFile(`/materials/${material.id}/download/`);
+      try {
+        await downloadFile(`/materials/${material.id}/download/`);
+      } catch (primaryErr) {
+        if (primaryErr?.status === 404 && material.file_url) {
+          await downloadFile(material.file_url);
+        } else {
+          throw primaryErr;
+        }
+      }
     } catch (err) {
       // If unauthorized, redirect to login
       if (err?.status === 401) {

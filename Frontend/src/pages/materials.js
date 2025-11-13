@@ -72,7 +72,16 @@ const Materials = () => {
     setDownloading(material.id);
     setDownloadStatus(prev => ({ ...prev, [material.id]: "downloading" }));
     try {
-      await downloadFile(`/materials/${material.id}/download/`);
+      // Prefer authenticated download endpoint; if it 404s and file_url exists, fallback
+      try {
+        await downloadFile(`/materials/${material.id}/download/`);
+      } catch (primaryErr) {
+        if (primaryErr?.status === 404 && material.file_url) {
+          await downloadFile(material.file_url);
+        } else {
+          throw primaryErr;
+        }
+      }
       setDownloadStatus(prev => ({ ...prev, [material.id]: "success" }));
       // Optionally, refresh materials list to update download count
       // fetchJSON("/materials/").then(data => setMaterials(data.results));

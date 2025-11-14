@@ -77,32 +77,37 @@ def material_download_view(request, pk):
     # Increment download count
     Material.objects.filter(pk=material.pk).update(download_count=F("download_count") + 1)
 
-    # Check if we're using S3 storage
-    if settings.USE_S3:
-        try:
-            storage = getattr(material.file, 'storage', None)
+    # Prefer S3 signed URL when the underlying file storage is S3
+    try:
+        storage = getattr(material.file, 'storage', None)
+        storage_class = storage.__class__.__name__ if storage else 'Unknown'
+
+        # Detect S3 storage without importing the class directly
+        # S3Boto3Storage typically has a 'bucket' attribute and class name contains 'S3Boto3Storage'
+        is_s3_storage = (
+            storage is not None and (
+                hasattr(storage, 'bucket') or 'S3Boto3Storage' in storage_class
+            )
+        )
+
+        if is_s3_storage:
             filename = os.path.basename(material.file.name)
-            # Use the storage backend's URL method to generate a signed URL with correct key
-            # Pass Content-Disposition so the browser downloads with a friendly filename
             signed_url = storage.url(
                 material.file.name,
-                parameters={
-                    'ResponseContentDisposition': f'attachment; filename="{filename}"'
-                },
-                expire=3600
+                parameters={'ResponseContentDisposition': f'attachment; filename="{filename}"'},
+                expire=3600,
             )
             logger.info(
                 f"Generated presigned URL via storage for material {material.pk} (user: {request.user.id})"
             )
             return Response({"download_url": signed_url}, status=status.HTTP_200_OK)
-        except Exception as e:
-            logger.error(f"Error generating presigned URL via storage for material {material.pk}: {e}")
-            return Response(
-                {"detail": "Error generating download link. Please try again."},
-                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            )
+    except Exception as e:
+        logger.error(
+            f"Error generating presigned URL via storage for material {material.pk} using {storage_class}: {e}"
+        )
+        # Fall through to local file serving if storage isn't S3-compatible
     
-    # Local file storage fallback for development
+    # Local file storage (or legacy files stored locally) fallback
     try:
         file_handle = material.file.open('rb')
         filename = os.path.basename(material.file.name)

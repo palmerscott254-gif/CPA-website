@@ -80,47 +80,26 @@ def material_download_view(request, pk):
     # Check if we're using S3 storage
     if settings.USE_S3:
         try:
-            # Generate a presigned URL for secure, temporary access
-            s3_client = boto3.client(
-                's3',
-                aws_access_key_id=settings.AWS_ACCESS_KEY_ID,
-                aws_secret_access_key=settings.AWS_SECRET_ACCESS_KEY,
-                region_name=settings.AWS_S3_REGION_NAME
-            )
-            
-            # Get the S3 object key from the file field
-            file_key = material.file.name
             storage = getattr(material.file, 'storage', None)
-            storage_location = getattr(storage, 'location', '') if storage else ''
-            if storage_location:
-                # Ensure the key includes the storage location prefix (e.g., 'media/')
-                file_key = f"{storage_location.strip('/')}/{file_key.lstrip('/')}"
-            
-            # Generate presigned URL valid for 1 hour
-            presigned_url = s3_client.generate_presigned_url(
-                'get_object',
-                Params={
-                    'Bucket': settings.AWS_STORAGE_BUCKET_NAME,
-                    'Key': file_key,
-                    'ResponseContentDisposition': f'attachment; filename="{os.path.basename(file_key)}"'
+            filename = os.path.basename(material.file.name)
+            # Use the storage backend's URL method to generate a signed URL with correct key
+            # Pass Content-Disposition so the browser downloads with a friendly filename
+            signed_url = storage.url(
+                material.file.name,
+                parameters={
+                    'ResponseContentDisposition': f'attachment; filename="{filename}"'
                 },
-                ExpiresIn=3600  # 1 hour
+                expire=3600
             )
-            
-            logger.info(f"Generated presigned URL for material {material.pk} (user: {request.user.id}) - bucket={settings.AWS_STORAGE_BUCKET_NAME}, key={file_key}")
-            return Response({"download_url": presigned_url}, status=status.HTTP_200_OK)
-            
-        except ClientError as e:
-            logger.error(f"S3 error generating presigned URL for material {material.pk}: {e}")
-            return Response(
-                {"detail": "Error generating download link. Please try again."}, 
-                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            logger.info(
+                f"Generated presigned URL via storage for material {material.pk} (user: {request.user.id})"
             )
+            return Response({"download_url": signed_url}, status=status.HTTP_200_OK)
         except Exception as e:
-            logger.error(f"Unexpected error generating presigned URL for material {material.pk}: {e}")
+            logger.error(f"Error generating presigned URL via storage for material {material.pk}: {e}")
             return Response(
-                {"detail": "Error generating download link. Please try again."}, 
-                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+                {"detail": "Error generating download link. Please try again."},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
             )
     
     # Local file storage fallback for development

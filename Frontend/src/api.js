@@ -4,8 +4,11 @@ let API_BASE = process.env.REACT_APP_API_BASE;
 if (!API_BASE) {
   try {
     const host = typeof window !== 'undefined' ? window.location.hostname : 'localhost';
-    // If frontend is hosted on the production frontend domain, default to the deployed backend
-    if (host === 'cpa-website-1.onrender.com') {
+    const isLocal = host === 'localhost' || host === '127.0.0.1';
+    const isRender = /\.onrender\.com$/i.test(host) || host === 'cpa-website-1.onrender.com';
+
+    if (!isLocal) {
+      // In any non-local environment (Render, custom domain), default to the deployed backend
       API_BASE = 'https://cpa-website-lvup.onrender.com/api';
     } else {
       API_BASE = 'http://localhost:8000/api';

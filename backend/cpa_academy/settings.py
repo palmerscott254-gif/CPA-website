@@ -139,36 +139,29 @@ STATICFILES_STORAGE = "whitenoise.storage.CompressedManifestStaticFilesStorage"
 USE_S3 = os.getenv("USE_S3", "False") == "True"
 
 if USE_S3:
-    # AWS S3 Settings for production media storage
+    # AWS S3 Settings (all pulled from environment variables; NEVER hardcode secrets)
     AWS_ACCESS_KEY_ID = os.getenv("AWS_ACCESS_KEY_ID")
     AWS_SECRET_ACCESS_KEY = os.getenv("AWS_SECRET_ACCESS_KEY")
     AWS_STORAGE_BUCKET_NAME = os.getenv("AWS_STORAGE_BUCKET_NAME", "cpa-academy-media")
     AWS_S3_REGION_NAME = os.getenv("AWS_S3_REGION_NAME", "us-east-1")
     AWS_S3_SIGNATURE_VERSION = "s3v4"
-    
-    # File upload settings - PRIVATE files requiring authentication
-    AWS_S3_FILE_OVERWRITE = False
-    AWS_DEFAULT_ACL = None  # Use bucket's default ACL (should be private)
-    AWS_QUERYSTRING_AUTH = True  # Enable presigned URLs
-    
-    # Custom domain (optional - uses CloudFront or custom domain if provided)
-    AWS_S3_CUSTOM_DOMAIN = os.getenv("AWS_S3_CUSTOM_DOMAIN")
-    
-    # S3 object parameters
-    AWS_S3_OBJECT_PARAMETERS = {
-        'CacheControl': 'max-age=86400',
-    }
-    
-    # Use custom storage backend for private media files
-    DEFAULT_FILE_STORAGE = 'cpa_academy.storage_backends.MediaStorage'
-    
-    # Set MEDIA_URL to S3 bucket URL
+
+    # Storage behavior
+    AWS_S3_FILE_OVERWRITE = False          # Keep distinct versions if names collide
+    AWS_DEFAULT_ACL = None                 # Private objects by default
+    AWS_QUERYSTRING_AUTH = True            # Enable presigned (querystring) URLs
+    AWS_S3_CUSTOM_DOMAIN = os.getenv("AWS_S3_CUSTOM_DOMAIN")  # Optional CDN/CloudFront
+    AWS_S3_OBJECT_PARAMETERS = { 'CacheControl': 'max-age=86400' }
+
+    # Use django-storages S3 backend directly as requested
+    DEFAULT_FILE_STORAGE = 'storages.backends.s3boto3.S3Boto3Storage'
+
+    # Media URL points to bucket (or custom domain)
     if AWS_S3_CUSTOM_DOMAIN:
         MEDIA_URL = f"https://{AWS_S3_CUSTOM_DOMAIN}/"
     else:
         MEDIA_URL = f"https://{AWS_STORAGE_BUCKET_NAME}.s3.{AWS_S3_REGION_NAME}.amazonaws.com/"
 else:
-    # Local development settings
     MEDIA_URL = "/media/"
     MEDIA_ROOT = os.path.join(BASE_DIR, "media")
 

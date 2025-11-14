@@ -2,6 +2,7 @@ from django.contrib import admin
 from django.urls import path, include, re_path
 from django.conf import settings
 from django.http import JsonResponse
+from django.core.files.storage import default_storage
 from django.views.static import serve
 
 # Import admin configuration to apply custom headers and titles
@@ -20,6 +21,18 @@ def api_root(request):
         }
     })
 
+def storage_health(request):
+    try:
+        storage_class = default_storage.__class__.__name__
+        return JsonResponse({
+            "use_s3": getattr(settings, 'USE_S3', False),
+            "default_file_storage": settings.DEFAULT_FILE_STORAGE,
+            "storage_class": storage_class,
+            "media_url": settings.MEDIA_URL,
+        })
+    except Exception as e:
+        return JsonResponse({"error": str(e)}, status=500)
+
 urlpatterns = [
     path("", api_root, name="api_root"),
     path("admin/", admin.site.urls),
@@ -29,6 +42,7 @@ urlpatterns = [
     path("api/subjects/", include("courses.urls")),
     path("api/materials/", include("materials.urls")),
     path("api/quizzes/", include("quizzes.urls")),
+    path("api/health/storage/", storage_health, name="storage_health"),
 ]
 
 # Only serve media files locally in development

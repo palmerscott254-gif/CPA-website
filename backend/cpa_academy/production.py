@@ -33,7 +33,14 @@ DATABASES = {
 
 # Static files
 STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
-MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
+
+# S3 Media Storage Configuration (override base settings if needed)
+USE_S3 = True
+AWS_STORAGE_BUCKET_NAME = os.getenv("AWS_STORAGE_BUCKET_NAME", "cpa-academy-media")
+AWS_S3_REGION_NAME = os.getenv("AWS_S3_REGION_NAME", "us-east-1")
+
+# Ensure media is not stored locally in production
+# MEDIA_ROOT is intentionally not set when using S3
 
 # CORS settings for production
 CORS_ALLOWED_ORIGINS = [

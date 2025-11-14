@@ -31,15 +31,9 @@ urlpatterns = [
     path("api/quizzes/", include("quizzes.urls")),
 ]
 
-# Serve media files. This is not recommended for production environments.
-# A better approach is to use a dedicated file storage service like AWS S3 or Google Cloud Storage,
-# and have Nginx or another web server serve the files directly.
-# However, for simplicity on platforms like Render, this will work.
-if settings.DEBUG:
+# Only serve media files locally in development
+# In production with S3, files are served directly from S3
+if settings.DEBUG and not getattr(settings, 'USE_S3', False):
     from django.conf.urls.static import static
     urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
-else:
-    urlpatterns += [
-        re_path(r'^%s(?P<path>.*)$' % settings.MEDIA_URL.lstrip('/'), serve, {'document_root': settings.MEDIA_ROOT}),
-    ]
 

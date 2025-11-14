@@ -5,6 +5,7 @@ from rest_framework.response import Response
 from django.shortcuts import get_object_or_404
 from rest_framework.parsers import MultiPartParser, FormParser
 from django.http import HttpResponseRedirect, FileResponse, Http404
+from django.conf import settings
 from rest_framework.decorators import api_view, permission_classes
 from django.db.models import F, Q
 import os
@@ -61,19 +62,32 @@ def material_download_view(request, pk):
     if not material.is_public:
         # If the user is not staff/superuser or the uploader, deny.
         if not (request.user.is_staff or request.user.is_superuser or material.uploaded_by == request.user):
-            return Response({"detail": "Not allowed"}, status=status.HTTP_403_FORBIDEN)
+            return Response({"detail": "Not allowed"}, status=status.HTTP_403_FORBIDDEN)
 
     # Increment download count
     Material.objects.filter(pk=material.pk).update(download_count=F("download_count") + 1)
 
-    # Serve the file directly using FileResponse
+    # If using S3 or any storage that produces an absolute URL, return a presigned URL
+    try:
+        file_url = material.file.url
+        if file_url.startswith("http://") or file_url.startswith("https://"):
+            logger.info(f"Returning presigned URL for material {material.pk}")
+            return Response({"download_url": file_url}, status=status.HTTP_200_OK)
+    except Exception:
+        # Fall back to local file response handling below
+        pass
+
+    # Serve the file directly using FileResponse for local storage
     try:
         file_handle = material.file.open('rb')
-        response = FileResponse(file_handle, as_attachment=True, filename=material.file.name)
-        logger.info(f"Serving download for material {material.pk}: {material.file.name}")
+        # Use the base name for the filename header
+        filename = os.path.basename(material.file.name)
+        response = FileResponse(file_handle, as_attachment=True, filename=filename)
+        logger.info(f"Serving download for material {material.pk}: {filename}")
         return response
     except FileNotFoundError:
-        logger.error(f"File not found for material {material.pk}: {material.file.path}")
+        path = getattr(material.file, 'path', str(material.file))
+        logger.error(f"File not found for material {material.pk}: {path}")
         raise Http404("File not found.")
     except Exception as e:
         logger.error(f"Error serving file for material {material.pk}: {e}")

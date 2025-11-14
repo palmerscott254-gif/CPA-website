@@ -90,6 +90,11 @@ def material_download_view(request, pk):
             
             # Get the S3 object key from the file field
             file_key = material.file.name
+            storage = getattr(material.file, 'storage', None)
+            storage_location = getattr(storage, 'location', '') if storage else ''
+            if storage_location:
+                # Ensure the key includes the storage location prefix (e.g., 'media/')
+                file_key = f"{storage_location.strip('/')}/{file_key.lstrip('/')}"
             
             # Generate presigned URL valid for 1 hour
             presigned_url = s3_client.generate_presigned_url(
@@ -102,7 +107,7 @@ def material_download_view(request, pk):
                 ExpiresIn=3600  # 1 hour
             )
             
-            logger.info(f"Generated presigned URL for material {material.pk} (user: {request.user.id})")
+            logger.info(f"Generated presigned URL for material {material.pk} (user: {request.user.id}) - bucket={settings.AWS_STORAGE_BUCKET_NAME}, key={file_key}")
             return Response({"download_url": presigned_url}, status=status.HTTP_200_OK)
             
         except ClientError as e:

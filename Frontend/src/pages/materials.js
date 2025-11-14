@@ -69,36 +69,45 @@ const Materials = () => {
   }, [unitFilter, searchTerm, sortBy]);
 
   const handleDownload = async (material) => {
+    // Check if user is authenticated before attempting download
+    const token = localStorage.getItem("access_token");
+    if (!token) {
+      logger.warn("Download attempted without authentication, redirecting to login");
+      window.location.href = "/login";
+      return;
+    }
+
     setDownloading(material.id);
     setDownloadStatus(prev => ({ ...prev, [material.id]: "downloading" }));
+    
     try {
-      // Prefer authenticated download endpoint; if it 404s and file_url exists, fallback
-      try {
-        await downloadFile(`/materials/${material.id}/download/`);
-      } catch (primaryErr) {
-        if (primaryErr?.status === 404 && material.file_url) {
-          await downloadFile(material.file_url);
-        } else {
-          throw primaryErr;
-        }
-      }
+      // Call the authenticated download endpoint
+      await downloadFile(`/materials/${material.id}/download/`);
       setDownloadStatus(prev => ({ ...prev, [material.id]: "success" }));
-      // Optionally, refresh materials list to update download count
-      // fetchJSON("/materials/").then(data => setMaterials(data.results));
     } catch (err) {
+      logger.error("Download error:", err);
+      
+      // Handle different error cases
       if (err?.status === 401) {
+        // Unauthorized - redirect to login
+        logger.warn("Unauthorized download attempt, redirecting to login");
         window.location.href = "/login";
         return;
+      } else if (err?.status === 403) {
+        // Forbidden - user doesn't have permission
+        alert("You don't have permission to download this material.");
+      } else if (err?.status === 404) {
+        // Not found
+        alert("Material not found. Please try again or contact support.");
+      } else {
+        // Generic error
+        alert(err?.message || "Download failed. Please try again.");
       }
-      logger.error("Download error:", err);
-      // Basic alert as a user-visible error; can be replaced with a toast lib later
-      alert(err?.message || "Download failed. Please try again.");
+      
       setDownloadStatus(prev => ({ ...prev, [material.id]: "error" }));
-      // The apiClient.download method should handle 401 redirects.
-      // For other errors, we can show a more specific message if needed.
     } finally {
       setDownloading(null);
-      // Optionally, clear success/error status after a few seconds
+      // Clear status after 3 seconds
       setTimeout(() => {
         setDownloadStatus(prev => ({ ...prev, [material.id]: undefined }));
       }, 3000);

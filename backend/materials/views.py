@@ -10,6 +10,8 @@ from rest_framework.decorators import api_view, permission_classes
 from django.db.models import F, Q
 import os
 import logging
+import boto3
+from botocore.exceptions import ClientError
 
 class MaterialListView(generics.ListAPIView):
     serializer_class = MaterialSerializer
@@ -54,41 +56,81 @@ class MaterialCreateView(generics.CreateAPIView):
 @api_view(["GET"])
 @permission_classes([permissions.IsAuthenticated])
 def material_download_view(request, pk):
+    """
+    Download endpoint that requires authentication.
+    Returns a temporary presigned S3 URL for authenticated users.
+    Returns 401 if unauthenticated, 403 if not allowed.
+    """
     logger = logging.getLogger(__name__)
     material = get_object_or_404(Material, pk=pk)
 
-    # Allow public materials for authenticated users. Only require additional permissions
-    # when the material is not public.
+    # Check permissions: public materials are accessible to all authenticated users
+    # Private materials require staff/superuser or uploader permissions
     if not material.is_public:
-        # If the user is not staff/superuser or the uploader, deny.
         if not (request.user.is_staff or request.user.is_superuser or material.uploaded_by == request.user):
-            return Response({"detail": "Not allowed"}, status=status.HTTP_403_FORBIDDEN)
+            logger.warning(f"User {request.user.id} attempted unauthorized access to material {material.pk}")
+            return Response(
+                {"detail": "You do not have permission to download this material."}, 
+                status=status.HTTP_403_FORBIDDEN
+            )
 
     # Increment download count
     Material.objects.filter(pk=material.pk).update(download_count=F("download_count") + 1)
 
-    # If using S3 or any storage that produces an absolute URL, return a presigned URL
-    try:
-        file_url = material.file.url
-        if file_url.startswith("http://") or file_url.startswith("https://"):
-            logger.info(f"Returning presigned URL for material {material.pk}")
-            return Response({"download_url": file_url}, status=status.HTTP_200_OK)
-    except Exception:
-        # Fall back to local file response handling below
-        pass
-
-    # Serve the file directly using FileResponse for local storage
+    # Check if we're using S3 storage
+    if settings.USE_S3:
+        try:
+            # Generate a presigned URL for secure, temporary access
+            s3_client = boto3.client(
+                's3',
+                aws_access_key_id=settings.AWS_ACCESS_KEY_ID,
+                aws_secret_access_key=settings.AWS_SECRET_ACCESS_KEY,
+                region_name=settings.AWS_S3_REGION_NAME
+            )
+            
+            # Get the S3 object key from the file field
+            file_key = material.file.name
+            
+            # Generate presigned URL valid for 1 hour
+            presigned_url = s3_client.generate_presigned_url(
+                'get_object',
+                Params={
+                    'Bucket': settings.AWS_STORAGE_BUCKET_NAME,
+                    'Key': file_key,
+                    'ResponseContentDisposition': f'attachment; filename="{os.path.basename(file_key)}"'
+                },
+                ExpiresIn=3600  # 1 hour
+            )
+            
+            logger.info(f"Generated presigned URL for material {material.pk} (user: {request.user.id})")
+            return Response({"download_url": presigned_url}, status=status.HTTP_200_OK)
+            
+        except ClientError as e:
+            logger.error(f"S3 error generating presigned URL for material {material.pk}: {e}")
+            return Response(
+                {"detail": "Error generating download link. Please try again."}, 
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+        except Exception as e:
+            logger.error(f"Unexpected error generating presigned URL for material {material.pk}: {e}")
+            return Response(
+                {"detail": "Error generating download link. Please try again."}, 
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+    
+    # Local file storage fallback for development
     try:
         file_handle = material.file.open('rb')
-        # Use the base name for the filename header
         filename = os.path.basename(material.file.name)
         response = FileResponse(file_handle, as_attachment=True, filename=filename)
-        logger.info(f"Serving download for material {material.pk}: {filename}")
+        logger.info(f"Serving local file download for material {material.pk}: {filename}")
         return response
     except FileNotFoundError:
-        path = getattr(material.file, 'path', str(material.file))
-        logger.error(f"File not found for material {material.pk}: {path}")
+        logger.error(f"File not found for material {material.pk}: {material.file.name}")
         raise Http404("File not found.")
     except Exception as e:
         logger.error(f"Error serving file for material {material.pk}: {e}")
-        return Response({"detail": "Error serving file."}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        return Response(
+            {"detail": "Error serving file. Please try again."}, 
+            status=status.HTTP_500_INTERNAL_SERVER_ERROR
+        )

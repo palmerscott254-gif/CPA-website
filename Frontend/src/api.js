@@ -133,7 +133,9 @@ export class ApiClient {
   async download(path, options = {}) {
     const isAbsolute = /^https?:\/\//i.test(path);
     const url = isAbsolute ? path : `${this.baseURL}${path}`;
-    const headers = {
+    
+    // Only include auth headers for API requests, not for presigned S3 URLs
+    const headers = isAbsolute ? {} : {
       ...this.getAuthHeaders(),
       ...(options.headers || {}),
     };
@@ -145,28 +147,31 @@ export class ApiClient {
         headers,
       });
 
-      // If unauthorized and there's no refresh token, redirect to login immediately
-      if (!isAbsolute && response.status === 401 && !localStorage.getItem("refresh_token")) {
-        window.location.href = "/login";
-        const err = new Error("Unauthorized");
-        err.status = 401;
-        throw err;
-      }
-
-      // If unauthorized and we have a refresh token, try to refresh
-      if (!isAbsolute && response.status === 401 && localStorage.getItem("refresh_token")) {
-        try {
-          await this.refreshToken();
-          // Retry the request with new token
-          headers.Authorization = `Bearer ${localStorage.getItem("access_token")}`;
-          response = await fetch(url, {
-            ...options,
-            headers,
-          });
-        } catch (refreshError) {
-          // Redirect to login if refresh fails
+      // Only handle auth for API endpoints, not absolute URLs (presigned URLs)
+      if (!isAbsolute) {
+        // If unauthorized and there's no refresh token, redirect to login immediately
+        if (response.status === 401 && !localStorage.getItem("refresh_token")) {
           window.location.href = "/login";
-          throw refreshError;
+          const err = new Error("Unauthorized - please log in");
+          err.status = 401;
+          throw err;
+        }
+
+        // If unauthorized and we have a refresh token, try to refresh
+        if (response.status === 401 && localStorage.getItem("refresh_token")) {
+          try {
+            await this.refreshToken();
+            // Retry the request with new token
+            headers.Authorization = `Bearer ${localStorage.getItem("access_token")}`;
+            response = await fetch(url, {
+              ...options,
+              headers,
+            });
+          } catch (refreshError) {
+            // Redirect to login if refresh fails
+            window.location.href = "/login";
+            throw refreshError;
+          }
         }
       }
 
@@ -248,17 +253,24 @@ export async function downloadFile(path) {
 
   const downloadFromResponse = async (response, originalPath) => {
     const contentType = response.headers.get('content-type');
+    
     // Handle JSON success where API returns a presigned URL for cloud storage
     if (contentType && contentType.includes('application/json')) {
       const data = await response.json();
       if (data && data.download_url) {
+        // Fetch the file from the presigned URL (no auth headers needed)
         const urlResp = await fetch(data.download_url);
         if (!urlResp.ok) {
-          throw new Error(`Failed to fetch presigned URL: HTTP ${urlResp.status}`);
+          throw new Error(`Failed to fetch file from presigned URL: HTTP ${urlResp.status}`);
         }
         const blob = await urlResp.blob();
         if (!blob || blob.size === 0) throw new Error('Downloaded file is empty');
-        const filename = extractFilename(originalPath, urlResp.headers.get('Content-Disposition') || urlResp.headers.get('content-disposition'));
+        
+        // Extract filename from the presigned URL or use a default
+        const filename = extractFilename(
+          originalPath, 
+          urlResp.headers.get('Content-Disposition') || urlResp.headers.get('content-disposition')
+        );
         triggerDownload(blob, filename);
         return;
       }
@@ -269,10 +281,13 @@ export async function downloadFile(path) {
       throw err;
     }
 
-    // Binary response path
+    // Binary response path (local file download)
     const blob = await response.blob();
     if (!blob || blob.size === 0) throw new Error('Downloaded file is empty');
-    const filename = extractFilename(originalPath, response.headers.get('Content-Disposition') || response.headers.get('content-disposition'));
+    const filename = extractFilename(
+      originalPath, 
+      response.headers.get('Content-Disposition') || response.headers.get('content-disposition')
+    );
     triggerDownload(blob, filename);
   };
 
@@ -280,22 +295,6 @@ export async function downloadFile(path) {
     let response = await apiClient.download(path);
     await downloadFromResponse(response, path);
   } catch (error) {
-    // Fallback to alternate route on 404
-    if (error?.status === 404) {
-      const m = path.match(/^\/materials\/(\d+)\/download\/?$/);
-      if (m) {
-        const altPath = `/materials/download/${m[1]}/`;
-        try {
-          const response = await apiClient.download(altPath);
-          await downloadFromResponse(response, altPath);
-          return; // success via fallback
-        } catch (fallbackErr) {
-          console.error('Download fallback failed:', fallbackErr);
-          throw fallbackErr;
-        }
-      }
-    }
-
     console.error('Download error in downloadFile:', error);
     throw error;
   }

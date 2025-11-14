@@ -1,0 +1,24 @@
+[
+  {
+    "AllowedHeaders": [
+      "*"
+    ],
+    "AllowedMethods": [
+      "GET",
+      "HEAD"
+    ],
+    "AllowedOrigins": [
+      "http://localhost:3000",
+      "http://127.0.0.1:3000",
+      "https://cpa-website-1.onrender.com",
+      "https://your-vercel-app.vercel.app"
+    ],
+    "ExposeHeaders": [
+      "ETag",
+      "Content-Type",
+      "Content-Length",
+      "Content-Disposition"
+    ],
+    "MaxAgeSeconds": 3600
+  }
+]

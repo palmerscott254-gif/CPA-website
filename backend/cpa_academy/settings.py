@@ -146,9 +146,10 @@ if USE_S3:
     AWS_S3_REGION_NAME = os.getenv("AWS_S3_REGION_NAME", "us-east-1")
     AWS_S3_SIGNATURE_VERSION = "s3v4"
     
-    # File upload settings
+    # File upload settings - PRIVATE files requiring authentication
     AWS_S3_FILE_OVERWRITE = False
-    AWS_DEFAULT_ACL = 'public-read'
+    AWS_DEFAULT_ACL = None  # Use bucket's default ACL (should be private)
+    AWS_QUERYSTRING_AUTH = True  # Enable presigned URLs
     
     # Custom domain (optional - uses CloudFront or custom domain if provided)
     AWS_S3_CUSTOM_DOMAIN = os.getenv("AWS_S3_CUSTOM_DOMAIN")
@@ -158,8 +159,8 @@ if USE_S3:
         'CacheControl': 'max-age=86400',
     }
     
-    # Use S3Boto3Storage directly for public files
-    DEFAULT_FILE_STORAGE = 'storages.backends.s3boto3.S3Boto3Storage'
+    # Use custom storage backend for private media files
+    DEFAULT_FILE_STORAGE = 'cpa_academy.storage_backends.MediaStorage'
     
     # Set MEDIA_URL to S3 bucket URL
     if AWS_S3_CUSTOM_DOMAIN:
@@ -207,6 +208,17 @@ if os.getenv("CORS_ALLOWED_ORIGINS"):
     )
 
 CORS_ALLOW_CREDENTIALS = True
+CORS_ALLOW_HEADERS = [
+    'accept',
+    'accept-encoding',
+    'authorization',
+    'content-type',
+    'dnt',
+    'origin',
+    'user-agent',
+    'x-csrftoken',
+    'x-requested-with',
+]
 
 CSRF_TRUSTED_ORIGINS = [
     "https://cpa-website-1.onrender.com",

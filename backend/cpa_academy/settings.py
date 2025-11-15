@@ -136,7 +136,7 @@ STATIC_ROOT = BASE_DIR / "staticfiles"
 STATICFILES_STORAGE = "whitenoise.storage.CompressedManifestStaticFilesStorage"
 
 # Media files configuration - uses S3 in production, local storage in development
-USE_S3 = os.getenv("USE_S3", "False") == "True"
+USE_S3 = os.getenv("USE_S3", "").lower() == "true"
 
 if USE_S3:
     # AWS S3 Settings (all pulled from environment variables; NEVER hardcode secrets)

@@ -2,12 +2,11 @@ from rest_framework import generics, permissions, status, serializers
 from .models import Material
 from .serializers import MaterialSerializer
 from rest_framework.response import Response
-from django.shortcuts import get_object_or_404
 from rest_framework.parsers import MultiPartParser, FormParser
-from django.http import HttpResponseRedirect, FileResponse, Http404
-from django.conf import settings
+from django.http import FileResponse
 from rest_framework.decorators import api_view, permission_classes
 from django.db.models import F, Q
+from rest_framework.exceptions import PermissionDenied
 import os
 import logging
 import boto3
@@ -114,6 +113,31 @@ def generate_s3_presigned_url(file_name, expiration=3600):
         return None
 
 
+class MaterialDetailView(generics.RetrieveDestroyAPIView):
+    """Retrieve or delete a single material.
+    GET is allowed for public materials or those owned by the user.
+    DELETE requires owner/staff/superuser.
+    """
+    serializer_class = MaterialSerializer
+    permission_classes = [permissions.IsAuthenticatedOrReadOnly]
+
+    def get_queryset(self):
+        user = self.request.user
+        if user.is_authenticated and (user.is_staff or user.is_superuser):
+            return Material.objects.all()
+        if user.is_authenticated:
+            return Material.objects.filter(Q(is_public=True) | Q(uploaded_by=user))
+        return Material.objects.filter(is_public=True)
+
+    def perform_destroy(self, instance):
+        user = self.request.user
+        if not user.is_authenticated:
+            raise PermissionDenied("Authentication required to delete material.")
+        if not (user.is_staff or user.is_superuser or instance.uploaded_by == user):
+            raise PermissionDenied("You do not have permission to delete this material.")
+        instance.delete()
+
+
 @api_view(["GET"])
 @permission_classes([permissions.IsAuthenticated])
 def material_download_view(request, pk):
@@ -210,28 +234,21 @@ def material_download_view(request, pk):
     
     # Local file storage fallback (for development or legacy files)
     try:
-        # Verify file exists in storage
         if not material.file.storage.exists(material.file.name):
             logger.error(f"File does not exist in storage for material {material.pk}: {material.file.name}")
-            return Response(
-                {"detail": "File not found in storage."}, 
-                status=status.HTTP_404_NOT_FOUND
-            )
-        
-        file_handle = material.file.open('rb')
+            return Response({"detail": "File not found in storage."}, status=status.HTTP_404_NOT_FOUND)
+
+        from io import BytesIO
         filename = os.path.basename(material.file.name)
-        response = FileResponse(file_handle, as_attachment=True, filename=filename)
+        # Read file content into memory so Windows file lock is released immediately
+        with material.file.open('rb') as fh:
+            data = fh.read()
+        response = FileResponse(BytesIO(data), as_attachment=True, filename=filename)
         logger.info(f"Serving local file download for material {material.pk}: {filename}")
         return response
     except FileNotFoundError:
         logger.error(f"File not found for material {material.pk}: {material.file.name}")
-        return Response(
-            {"detail": "File not found."}, 
-            status=status.HTTP_404_NOT_FOUND
-        )
+        return Response({"detail": "File not found."}, status=status.HTTP_404_NOT_FOUND)
     except Exception as e:
         logger.error(f"Error serving file for material {material.pk}: {e}", exc_info=True)
-        return Response(
-            {"detail": "Error serving file. Please try again."}, 
-            status=status.HTTP_500_INTERNAL_SERVER_ERROR
-        )
+        return Response({"detail": "Error serving file. Please try again."}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)

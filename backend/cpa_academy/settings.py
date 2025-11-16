@@ -4,7 +4,7 @@ from datetime import timedelta
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-SECRET_KEY = os.getenv("DJANGO_SECRET_KEY", "django-insecure-your-new-secret-key")
+SECRET_KEY = os.getenv("DJANGO_SECRET_KEY") or "dev-only-insecure-key"
 DEBUG = os.getenv("DJANGO_DEBUG", "True") == "True"
 
 ALLOWED_HOSTS = ["localhost", "127.0.0.1", "cpa-website-lvup.onrender.com"] if DEBUG else [
@@ -137,6 +137,10 @@ STATICFILES_STORAGE = "whitenoise.storage.CompressedManifestStaticFilesStorage"
 
 # Media files configuration - uses S3 in production, local storage in development
 USE_S3 = os.getenv("USE_S3", "").lower() == "true"
+
+# Do not allow running in production without a proper secret key
+if not DEBUG and (not os.getenv("DJANGO_SECRET_KEY")):
+    raise RuntimeError("DJANGO_SECRET_KEY must be set in production.")
 
 if USE_S3:
     # AWS S3 Settings (all pulled from environment variables; NEVER hardcode secrets)

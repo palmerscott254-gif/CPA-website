@@ -4,6 +4,7 @@ from .serializers import MaterialSerializer
 from rest_framework.response import Response
 from rest_framework.parsers import MultiPartParser, FormParser
 from django.http import FileResponse
+from django.conf import settings
 from rest_framework.decorators import api_view, permission_classes
 from django.db.models import F, Q
 from rest_framework.exceptions import PermissionDenied

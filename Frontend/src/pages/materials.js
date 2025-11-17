@@ -69,22 +69,42 @@ const Materials = () => {
   }, [unitFilter, searchTerm, sortBy]);
 
   const handleDownload = async (material) => {
+    console.log("=".repeat(80));
+    console.log("DOWNLOAD REQUEST STARTED");
+    console.log("=".repeat(80));
+    console.log(`Material ID: ${material.id}`);
+    console.log(`Material Title: ${material.title}`);
+    console.log(`File Type: ${material.file_type}`);
+    
     // Check if user is authenticated before attempting download
     const token = localStorage.getItem("access_token");
     if (!token) {
+      console.warn("✗ No access token found - redirecting to login");
       logger.warn("Download attempted without authentication, redirecting to login");
       window.location.href = "/login";
       return;
     }
+    
+    console.log(`✓ Access token found: ${token.substring(0, 20)}...`);
 
     setDownloading(material.id);
     setDownloadStatus(prev => ({ ...prev, [material.id]: "downloading" }));
     
+    const downloadUrl = `/materials/${material.id}/download/`;
+    console.log(`Download URL: ${downloadUrl}`);
+    
     try {
       // Call the authenticated download endpoint
-      await downloadFile(`/materials/${material.id}/download/`);
+      console.log(`Calling downloadFile("${downloadUrl}")...`);
+      await downloadFile(downloadUrl);
+      console.log("✓✓✓ Download successful!");
+      console.log("=".repeat(80));
       setDownloadStatus(prev => ({ ...prev, [material.id]: "success" }));
     } catch (err) {
+      console.error("✗ Download error:", err);
+      console.error(`Error status: ${err?.status}`);
+      console.error(`Error message: ${err?.message}`);
+      console.log("=".repeat(80));
       logger.error("Download error:", err);
       
       // Handle different error cases

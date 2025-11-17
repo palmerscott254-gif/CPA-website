@@ -137,18 +137,28 @@ export class ApiClient {
     const isAbsolute = /^https?:\/\//i.test(path);
     const url = isAbsolute ? path : `${this.baseURL}${path}`;
     
+    console.log(`[ApiClient.download] Path: "${path}"`);
+    console.log(`[ApiClient.download] Is absolute: ${isAbsolute}`);
+    console.log(`[ApiClient.download] Final URL: "${url}"`);
+    
     // Only include auth headers for API requests, not for presigned S3 URLs
     const headers = isAbsolute ? {} : {
       ...this.getAuthHeaders(),
       ...(options.headers || {}),
     };
+    
+    console.log(`[ApiClient.download] Headers:`, Object.keys(headers));
 
     let response;
     try {
+      console.log(`[ApiClient.download] Fetching...`);
       response = await fetch(url, {
         ...options,
         headers,
       });
+      
+      console.log(`[ApiClient.download] Response status: ${response.status}`);
+      console.log(`[ApiClient.download] Response headers:`, Object.fromEntries(response.headers.entries()));
 
       // Only handle auth for API endpoints, not absolute URLs (presigned URLs)
       if (!isAbsolute) {
@@ -208,8 +218,12 @@ export async function fetchJSON(path, opts = {}) {
 }
 
 export async function downloadFile(path) {
+  console.log(`[downloadFile] Called with path: "${path}"`);
+  
   const isIOS = typeof navigator !== 'undefined' && /iPad|iPhone|iPod/.test(navigator.userAgent);
   const isSafari = typeof navigator !== 'undefined' && /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
+  
+  console.log(`Browser detection: iOS=${isIOS}, Safari=${isSafari}`);
 
   const triggerDownload = (blob, fallbackFilename) => {
     const filename = fallbackFilename || 'download';
@@ -256,17 +270,32 @@ export async function downloadFile(path) {
 
   const downloadFromResponse = async (response, originalPath) => {
     const contentType = response.headers.get('content-type');
+    console.log(`[downloadFromResponse] Content-Type: ${contentType}`);
+    console.log(`[downloadFromResponse] Status: ${response.status}`);
     
     // Handle JSON success where API returns a presigned URL for cloud storage
     if (contentType && contentType.includes('application/json')) {
+      console.log(`Received JSON response - expecting presigned URL...`);
       const data = await response.json();
+      console.log(`JSON data:`, data);
+      
       if (data && data.download_url) {
+        const presignedUrl = data.download_url;
+        console.log(`✓ Got presigned URL (length: ${presignedUrl.length})`);
+        console.log(`Presigned URL preview: ${presignedUrl.substring(0, 100)}...`);
+        
         // Fetch the file from the presigned URL (no auth headers needed)
-        const urlResp = await fetch(data.download_url);
+        console.log(`Fetching file from presigned URL...`);
+        const urlResp = await fetch(presignedUrl);
+        console.log(`Presigned URL fetch status: ${urlResp.status}`);
+        
         if (!urlResp.ok) {
           throw new Error(`Failed to fetch file from presigned URL: HTTP ${urlResp.status}`);
         }
+        
         const blob = await urlResp.blob();
+        console.log(`✓ Downloaded blob: ${blob.size} bytes, type: ${blob.type}`);
+        
         if (!blob || blob.size === 0) throw new Error('Downloaded file is empty');
         
         // Extract filename from the presigned URL or use a default
@@ -274,10 +303,13 @@ export async function downloadFile(path) {
           originalPath, 
           urlResp.headers.get('Content-Disposition') || urlResp.headers.get('content-disposition')
         );
+        console.log(`Triggering download with filename: ${filename}`);
         triggerDownload(blob, filename);
+        console.log(`✓ Download triggered successfully`);
         return;
       }
       // JSON error
+      console.error(`✗ JSON response but no download_url:`, data);
       const detail = data?.detail || 'Download failed';
       const err = new Error(detail);
       err.status = response.status;
@@ -285,20 +317,29 @@ export async function downloadFile(path) {
     }
 
     // Binary response path (local file download)
+    console.log(`Received binary response - downloading directly...`);
     const blob = await response.blob();
+    console.log(`✓ Downloaded blob: ${blob.size} bytes`);
     if (!blob || blob.size === 0) throw new Error('Downloaded file is empty');
     const filename = extractFilename(
       originalPath, 
       response.headers.get('Content-Disposition') || response.headers.get('content-disposition')
     );
+    console.log(`Triggering download with filename: ${filename}`);
     triggerDownload(blob, filename);
+    console.log(`✓ Download triggered successfully`);
   };
 
   try {
+    console.log(`Calling apiClient.download("${path}")...`);
     let response = await apiClient.download(path);
+    console.log(`✓ API client returned response`);
     await downloadFromResponse(response, path);
   } catch (error) {
-    console.error('Download error in downloadFile:', error);
+    console.error('✗ Download error in downloadFile:', error);
+    console.error(`Error type: ${error.constructor.name}`);
+    console.error(`Error status: ${error.status}`);
+    console.error(`Error message: ${error.message}`);
     throw error;
   }
 }

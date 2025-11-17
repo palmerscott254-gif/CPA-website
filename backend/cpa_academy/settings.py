@@ -157,7 +157,17 @@ if USE_S3:
     AWS_S3_CUSTOM_DOMAIN = os.getenv("AWS_S3_CUSTOM_DOMAIN")  # Optional CDN/CloudFront
     AWS_S3_OBJECT_PARAMETERS = { 'CacheControl': 'max-age=86400' }
 
-    # Use django-storages S3 backend directly as requested
+    # Use django-storages S3 backend (Django 4.2+ STORAGES setting)
+    STORAGES = {
+        "default": {
+            "BACKEND": "storages.backends.s3boto3.S3Boto3Storage",
+        },
+        "staticfiles": {
+            "BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage",
+        },
+    }
+    
+    # Legacy setting for backward compatibility
     DEFAULT_FILE_STORAGE = 'storages.backends.s3boto3.S3Boto3Storage'
 
     # Media URL points to bucket (or custom domain)
@@ -168,6 +178,16 @@ if USE_S3:
 else:
     MEDIA_URL = "/media/"
     MEDIA_ROOT = os.path.join(BASE_DIR, "media")
+    
+    # Ensure STORAGES is defined even when not using S3
+    STORAGES = {
+        "default": {
+            "BACKEND": "django.core.files.storage.FileSystemStorage",
+        },
+        "staticfiles": {
+            "BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage",
+        },
+    }
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 

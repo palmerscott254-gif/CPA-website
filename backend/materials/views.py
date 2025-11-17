@@ -73,21 +73,31 @@ def generate_s3_presigned_url(file_name, expiration=3600):
         region = getattr(settings, 'AWS_S3_REGION_NAME', 'us-east-1')
         access_key = getattr(settings, 'AWS_ACCESS_KEY_ID', None)
         secret_key = getattr(settings, 'AWS_SECRET_ACCESS_KEY', None)
+        signature_version = getattr(settings, 'AWS_S3_SIGNATURE_VERSION', 's3v4')
         
         if not all([bucket_name, access_key, secret_key]):
             logger.error("AWS credentials or bucket name not configured")
             return None
         
-        # Create S3 client
+        # Create S3 client with explicit signature version
+        from botocore.client import Config
         s3_client = boto3.client(
             's3',
             region_name=region,
             aws_access_key_id=access_key,
-            aws_secret_access_key=secret_key
+            aws_secret_access_key=secret_key,
+            config=Config(signature_version=signature_version)
         )
         
         # Extract filename for content disposition
         filename = os.path.basename(file_name)
+        
+        # Verify object exists before generating URL
+        try:
+            s3_client.head_object(Bucket=bucket_name, Key=file_name)
+        except ClientError as e:
+            logger.error(f"Object not found in S3: {file_name} - {e}")
+            return None
         
         # Generate presigned URL
         presigned_url = s3_client.generate_presigned_url(
@@ -100,7 +110,8 @@ def generate_s3_presigned_url(file_name, expiration=3600):
             ExpiresIn=expiration
         )
         
-        logger.info(f"Generated presigned URL via boto3 client for: {file_name}")
+        logger.info(f"Generated presigned URL via boto3 client for: {file_name} (valid for {expiration}s)")
+        logger.debug(f"Presigned URL: {presigned_url[:100]}...")
         return presigned_url
         
     except NoCredentialsError:

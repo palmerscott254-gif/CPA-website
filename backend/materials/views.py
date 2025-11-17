@@ -11,7 +11,7 @@ from django.conf import settings
 import os
 import logging
 import boto3
-from botocore.exceptions import ClientError, NoCredentialsError
+from botocore.exceptions import ClientError
 
 class MaterialListView(generics.ListAPIView):
     serializer_class = MaterialSerializer

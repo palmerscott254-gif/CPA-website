@@ -54,92 +54,37 @@ class MaterialCreateView(generics.CreateAPIView):
 
 
 def generate_s3_presigned_url(file_name, expiration=3600):
-    """
-    Generate a presigned URL for an S3 object using boto3 client directly.
-    This is a fallback method if storage.url() doesn't work.
-    
-    Args:
-        file_name: The S3 object key (path within bucket)
-        expiration: Time in seconds for the URL to remain valid
-    
-    Returns:
-        str: Presigned URL or None if generation fails
-    """
-    logger = logging.getLogger(__name__)
-    
-    print(f"  [generate_s3_presigned_url] Called with file_name='{file_name}', expiration={expiration}s")
-    
+    """Generate a presigned URL for S3 object download."""
     try:
-        # Get AWS credentials and bucket from settings
-        bucket_name = getattr(settings, 'AWS_STORAGE_BUCKET_NAME', None)
-        region = getattr(settings, 'AWS_S3_REGION_NAME', 'us-east-1')
-        access_key = getattr(settings, 'AWS_ACCESS_KEY_ID', None)
-        secret_key = getattr(settings, 'AWS_SECRET_ACCESS_KEY', None)
-        signature_version = getattr(settings, 'AWS_S3_SIGNATURE_VERSION', 's3v4')
-        
-        print(f"  Bucket: {bucket_name}")
-        print(f"  Region: {region}")
-        print(f"  Access Key: {access_key[:10]}..." if access_key else "  Access Key: None")
-        print(f"  Signature version: {signature_version}")
-        
-        if not all([bucket_name, access_key, secret_key]):
-            print(f"  ✗ Missing AWS credentials or bucket name")
-            logger.error("AWS credentials or bucket name not configured")
-            return None
-        
-        # Create S3 client with explicit signature version
         from botocore.client import Config
-        print(f"  Creating boto3 S3 client...")
+        
         s3_client = boto3.client(
             's3',
-            region_name=region,
-            aws_access_key_id=access_key,
-            aws_secret_access_key=secret_key,
-            config=Config(signature_version=signature_version)
+            region_name=getattr(settings, 'AWS_S3_REGION_NAME', 'us-east-1'),
+            aws_access_key_id=getattr(settings, 'AWS_ACCESS_KEY_ID'),
+            aws_secret_access_key=getattr(settings, 'AWS_SECRET_ACCESS_KEY'),
+            config=Config(signature_version='s3v4')
         )
         
-        # Extract filename for content disposition
+        bucket = getattr(settings, 'AWS_STORAGE_BUCKET_NAME')
         filename = os.path.basename(file_name)
         
-        # Verify object exists before generating URL
-        print(f"  Checking if object exists in S3...")
-        try:
-            s3_client.head_object(Bucket=bucket_name, Key=file_name)
-            print(f"  ✓ Object exists in S3")
-        except ClientError as e:
-            error_code = e.response['Error']['Code']
-            print(f"  ✗ Object not found in S3: {error_code}")
-            logger.error(f"Object not found in S3: {file_name} - {e}")
-            return None
+        # Verify object exists
+        s3_client.head_object(Bucket=bucket, Key=file_name)
         
         # Generate presigned URL
-        print(f"  Generating presigned URL...")
-        presigned_url = s3_client.generate_presigned_url(
+        url = s3_client.generate_presigned_url(
             'get_object',
             Params={
-                'Bucket': bucket_name,
+                'Bucket': bucket,
                 'Key': file_name,
                 'ResponseContentDisposition': f'attachment; filename="{filename}"'
             },
             ExpiresIn=expiration
         )
-        
-        print(f"  ✓ Presigned URL generated successfully")
-        logger.info(f"Generated presigned URL via boto3 client for: {file_name} (valid for {expiration}s)")
-        logger.debug(f"Presigned URL: {presigned_url[:100]}...")
-        return presigned_url
-        
-    except NoCredentialsError:
-        print(f"  ✗ NoCredentialsError: AWS credentials not found")
-        logger.error("AWS credentials not found")
-        return None
-    except ClientError as e:
-        print(f"  ✗ ClientError: {e}")
-        logger.error(f"S3 ClientError generating presigned URL: {e}")
-        return None
+        return url
     except Exception as e:
-        print(f"  ✗ Unexpected exception: {e}")
-        logger.error(f"Unexpected error generating presigned URL: {e}", exc_info=True)
+        logging.getLogger(__name__).error(f"S3 presigned URL generation failed: {e}")
         return None
 
 
@@ -172,167 +117,61 @@ class MaterialDetailView(generics.RetrieveDestroyAPIView):
 @permission_classes([permissions.IsAuthenticated])
 def material_download_view(request, pk):
     """
-    Download endpoint that requires authentication.
-    Returns a temporary presigned S3 URL for authenticated users.
-    Returns 401 if unauthenticated, 403 if not allowed, 404 if material not found.
+    Production-ready download endpoint.
+    Returns a presigned S3 URL (S3 storage) or serves file directly (local storage).
     """
     logger = logging.getLogger(__name__)
     
-    # DEBUG: Log the incoming request details
-    print(f"\n{'='*80}")
-    print(f"DOWNLOAD REQUEST RECEIVED")
-    print(f"{'='*80}")
-    print(f"Material ID (pk): {pk}")
-    print(f"User: {request.user.email if request.user.is_authenticated else 'Anonymous'} (ID: {request.user.id if request.user.is_authenticated else 'N/A'})")
-    print(f"Request path: {request.path}")
-    print(f"Request method: {request.method}")
-    
-    # Get material or return 404
+    # Fetch material
     try:
-        material = Material.objects.get(pk=pk)
-        print(f"✓ Material found: ID={material.id}, Title='{material.title}'")
-        print(f"  File: {material.file.name if material.file else 'No file'}")
-        print(f"  Is public: {material.is_public}")
+        material = Material.objects.select_related('uploaded_by', 'unit').get(pk=pk)
     except Material.DoesNotExist:
-        print(f"✗ Material with pk={pk} NOT FOUND in database")
-        logger.warning(f"Material with pk={pk} not found (requested by user {request.user.id})")
-        return Response(
-            {"detail": "Material not found."}, 
-            status=status.HTTP_404_NOT_FOUND
-        )
+        return Response({"detail": "Material not found."}, status=status.HTTP_404_NOT_FOUND)
 
-    # Check permissions: public materials are accessible to all authenticated users
-    # Private materials require staff/superuser or uploader permissions
+    # Check permissions
     if not material.is_public:
         if not (request.user.is_staff or request.user.is_superuser or material.uploaded_by == request.user):
-            print(f"✗ Permission denied: User {request.user.id} cannot access private material {material.pk}")
-            logger.warning(f"User {request.user.id} attempted unauthorized access to material {material.pk}")
-            return Response(
-                {"detail": "You do not have permission to download this material."}, 
-                status=status.HTTP_403_FORBIDDEN
-            )
-    
-    print(f"✓ Permission check passed")
+            return Response({"detail": "You do not have permission to download this material."}, status=status.HTTP_403_FORBIDDEN)
 
-    # Verify the file field is not empty
-    if not material.file or not material.file.name:
-        print(f"✗ Material {material.pk} has NO FILE attached")
-        logger.error(f"Material {material.pk} has no file attached")
-        return Response(
-            {"detail": "This material has no file attached."}, 
-            status=status.HTTP_404_NOT_FOUND
-        )
-    
-    print(f"✓ File exists: {material.file.name}")
+    # Verify file exists
+    if not material.file:
+        return Response({"detail": "This material has no file attached."}, status=status.HTTP_404_NOT_FOUND)
 
-    # Increment download count
-    Material.objects.filter(pk=material.pk).update(download_count=F("download_count") + 1)
-    print(f"✓ Download count incremented")
+    # Increment download count asynchronously
+    Material.objects.filter(pk=pk).update(download_count=F("download_count") + 1)
 
-    # Attempt to generate S3 presigned URL
-    print(f"\nChecking storage backend...")
+    # Get storage backend
+    storage = material.file.storage
+    is_s3 = 'S3' in storage.__class__.__name__
+
+    # S3: Return presigned URL
+    if is_s3:
+        try:
+            # Try django-storages method first
+            presigned_url = storage.url(material.file.name)
+            logger.info(f"Download: Material {pk} by user {request.user.id}")
+            return Response({"download_url": presigned_url}, status=status.HTTP_200_OK)
+        except Exception:
+            # Fallback to boto3 direct method
+            presigned_url = generate_s3_presigned_url(material.file.name)
+            if presigned_url:
+                logger.info(f"Download (boto3): Material {pk} by user {request.user.id}")
+                return Response({"download_url": presigned_url}, status=status.HTTP_200_OK)
+            logger.error(f"Failed to generate presigned URL for material {pk}")
+            return Response({"detail": "Failed to generate download link."}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+    # Local: Serve file directly
     try:
-        storage = getattr(material.file, 'storage', None)
-        storage_class = storage.__class__.__name__ if storage else 'Unknown'
-        print(f"Storage class: {storage_class}")
-
-        # Detect S3 storage without importing the class directly
-        # S3Boto3Storage typically has a 'bucket' attribute and class name contains 'S3Boto3Storage'
-        is_s3_storage = (
-            storage is not None and (
-                hasattr(storage, 'bucket') or 'S3Boto3Storage' in storage_class
-            )
-        )
-        
-        print(f"Is S3 storage: {is_s3_storage}")
-
-        if is_s3_storage:
-            print(f"\nGenerating S3 presigned URL...")
-            # Extract clean filename for download
-            filename = os.path.basename(material.file.name)
-            print(f"S3 Key: {material.file.name}")
-            print(f"Filename: {filename}")
-            
-            # Try Method 1: Generate presigned URL via storage backend
-            try:
-                print(f"Attempting Method 1: storage.url()...")
-                signed_url = storage.url(
-                    material.file.name,
-                    parameters={'ResponseContentDisposition': f'attachment; filename="{filename}"'},
-                    expire=3600,  # URL valid for 1 hour
-                )
-                
-                print(f"✓✓✓ SUCCESS! Generated presigned URL via storage")
-                print(f"URL length: {len(signed_url)}")
-                print(f"URL preview: {signed_url[:100]}...")
-                print(f"{'='*80}\n")
-                
-                logger.info(
-                    f"Generated presigned S3 URL via storage for material {material.pk} (user: {request.user.id}, file: {filename})"
-                )
-                return Response({"download_url": signed_url}, status=status.HTTP_200_OK)
-            except Exception as storage_error:
-                print(f"✗ Method 1 failed: {storage_error}")
-                logger.warning(
-                    f"storage.url() failed for material {material.pk}: {storage_error}. Trying boto3 fallback..."
-                )
-                
-                # Try Method 2: Generate presigned URL via boto3 client directly
-                print(f"Attempting Method 2: boto3 direct...")
-                signed_url = generate_s3_presigned_url(material.file.name, expiration=3600)
-                if signed_url:
-                    print(f"✓✓✓ SUCCESS! Generated presigned URL via boto3")
-                    print(f"URL length: {len(signed_url)}")
-                    print(f"URL preview: {signed_url[:100]}...")
-                    print(f"{'='*80}\n")
-                    
-                    logger.info(
-                        f"Generated presigned S3 URL via boto3 for material {material.pk} (user: {request.user.id}, file: {filename})"
-                    )
-                    return Response({"download_url": signed_url}, status=status.HTTP_200_OK)
-                else:
-                    print(f"✗ Method 2 also failed")
-                    logger.error(f"Both storage.url() and boto3 methods failed for material {material.pk}")
-                    # Fall through to local file serving
-        else:
-            print(f"Not S3 storage, will use local file serving")
-            logger.info(f"Storage is not S3 ({storage_class}), falling back to local file serving")
-    except Exception as e:
-        print(f"✗ Exception in presigned URL generation: {e}")
-        logger.error(
-            f"Error generating presigned URL for material {material.pk}: {e}",
-            exc_info=True
-        )
-        # Fall through to local file serving if storage isn't S3-compatible
-    
-    # Local file storage fallback (for development or legacy files)
-    print(f"\nAttempting local file serving...")
-    try:
-        if not material.file.storage.exists(material.file.name):
-            print(f"✗ File does not exist in storage: {material.file.name}")
-            logger.error(f"File does not exist in storage for material {material.pk}: {material.file.name}")
+        if not storage.exists(material.file.name):
             return Response({"detail": "File not found in storage."}, status=status.HTTP_404_NOT_FOUND)
 
-        from io import BytesIO
         filename = os.path.basename(material.file.name)
-        print(f"Reading file into memory: {filename}")
-        # Read file content into memory so Windows file lock is released immediately
+        from io import BytesIO
         with material.file.open('rb') as fh:
             data = fh.read()
         
-        print(f"✓ Serving local file: {len(data)} bytes")
-        print(f"{'='*80}\n")
-        
-        response = FileResponse(BytesIO(data), as_attachment=True, filename=filename)
-        logger.info(f"Serving local file download for material {material.pk}: {filename}")
-        return response
-    except FileNotFoundError:
-        print(f"✗ FileNotFoundError: {material.file.name}")
-        print(f"{'='*80}\n")
-        logger.error(f"File not found for material {material.pk}: {material.file.name}")
-        return Response({"detail": "File not found."}, status=status.HTTP_404_NOT_FOUND)
+        logger.info(f"Download (local): Material {pk} by user {request.user.id}")
+        return FileResponse(BytesIO(data), as_attachment=True, filename=filename)
     except Exception as e:
-        print(f"✗ Exception serving file: {e}")
-        print(f"{'='*80}\n")
-        logger.error(f"Error serving file for material {material.pk}: {e}", exc_info=True)
-        return Response({"detail": "Error serving file. Please try again."}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        logger.error(f"Download error for material {pk}: {e}")
+        return Response({"detail": "Error downloading file."}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)

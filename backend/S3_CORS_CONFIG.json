@@ -14,8 +14,7 @@
     ],
     "AllowedMethods": [
       "GET",
-      "HEAD",
-      "OPTIONS"
+      "HEAD"
     ],
     "AllowedOrigins": [
       "http://localhost:3000",

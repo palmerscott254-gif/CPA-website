@@ -216,7 +216,6 @@ CORS_ALLOWED_ORIGINS = [
     "http://localhost:3000",
     "http://127.0.0.1:3000",
     "https://cpa-website-1.onrender.com",
-    "https://your-vercel-app.vercel.app",
 ]
 
 if os.getenv("CORS_ALLOWED_ORIGINS"):
@@ -225,6 +224,18 @@ if os.getenv("CORS_ALLOWED_ORIGINS"):
     )
 
 CORS_ALLOW_CREDENTIALS = True
+
+# Allow all necessary HTTP methods for downloads
+CORS_ALLOW_METHODS = [
+    'DELETE',
+    'GET',
+    'OPTIONS',
+    'PATCH',
+    'POST',
+    'PUT',
+]
+
+# Allow all necessary headers
 CORS_ALLOW_HEADERS = [
     'accept',
     'accept-encoding',
@@ -237,8 +248,28 @@ CORS_ALLOW_HEADERS = [
     'x-requested-with',
 ]
 
+# Expose headers needed for download handling
+CORS_EXPOSE_HEADERS = [
+    'Content-Disposition',
+    'Content-Type',
+    'Content-Length',
+]
+
+# CSRF Configuration
 CSRF_TRUSTED_ORIGINS = [
+    "http://localhost:3000",
+    "http://127.0.0.1:3000",
     "https://cpa-website-1.onrender.com",
     "https://cpa-website-lvup.onrender.com",
-    "https://your-vercel-app.vercel.app",
 ]
+
+if os.getenv("CSRF_TRUSTED_ORIGINS"):
+    CSRF_TRUSTED_ORIGINS.extend(
+        [origin.strip() for origin in os.getenv("CSRF_TRUSTED_ORIGINS").split(",")]
+    )
+
+# Allow session cookies to be sent cross-origin
+SESSION_COOKIE_SAMESITE = 'None'
+SESSION_COOKIE_SECURE = not DEBUG  # Secure in production only
+CSRF_COOKIE_SAMESITE = 'None'
+CSRF_COOKIE_SECURE = not DEBUG  # Secure in production only

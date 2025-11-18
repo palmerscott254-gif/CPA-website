@@ -69,14 +69,9 @@ const Materials = () => {
   }, [unitFilter, searchTerm, sortBy]);
 
   const handleDownload = async (material) => {
-    // Check if user is authenticated before attempting download
-    const token = localStorage.getItem("access_token");
-    if (!token) {
-      logger.warn("Download attempted without authentication, redirecting to login");
-      window.location.href = "/login";
-      return;
-    }
-
+    // Note: We don't check auth here - let the backend decide
+    // Public materials work without auth, private require it
+    
     setDownloading(material.id);
     setDownloadStatus(prev => ({ ...prev, [material.id]: "downloading" }));
     
@@ -85,6 +80,7 @@ const Materials = () => {
     try {
       await downloadFile(downloadUrl);
       setDownloadStatus(prev => ({ ...prev, [material.id]: "success" }));
+      logger.info(`Successfully downloaded: ${material.title}`);
     } catch (err) {
       logger.error("Download error:", err);
       
@@ -92,6 +88,7 @@ const Materials = () => {
       if (err?.status === 401) {
         // Unauthorized - redirect to login
         logger.warn("Unauthorized download attempt, redirecting to login");
+        alert("Please log in to download this material.");
         window.location.href = "/login";
         return;
       } else if (err?.status === 403) {
@@ -99,10 +96,14 @@ const Materials = () => {
         alert("You don't have permission to download this material.");
       } else if (err?.status === 404) {
         // Not found
-        alert("Material not found. Please try again or contact support.");
+        alert("Material not found or file is missing. Please contact support.");
+      } else if (err?.status === 0) {
+        // Network error
+        alert("Network error. Please check your connection and try again.");
       } else {
         // Generic error
-        alert(err?.message || "Download failed. Please try again.");
+        const message = err?.message || "Download failed. Please try again.";
+        alert(message);
       }
       
       setDownloadStatus(prev => ({ ...prev, [material.id]: "error" }));

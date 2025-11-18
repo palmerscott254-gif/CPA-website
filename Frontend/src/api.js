@@ -145,12 +145,16 @@ export class ApiClient {
       ...(options.headers || {}),
     };
 
+    // Include credentials for API requests to support CORS with authentication
+    const fetchOptions = {
+      ...options,
+      headers,
+      credentials: isAbsolute ? 'omit' : 'include', // Include credentials for API calls
+    };
+
     let response;
     try {
-      response = await fetch(url, {
-        ...options,
-        headers,
-      });
+      response = await fetch(url, fetchOptions);
 
       // Only handle auth for API endpoints, not absolute URLs (presigned URLs)
       if (!isAbsolute) {
@@ -169,7 +173,7 @@ export class ApiClient {
             // Retry the request with new token
             headers.Authorization = `Bearer ${localStorage.getItem("access_token")}`;
             response = await fetch(url, {
-              ...options,
+              ...fetchOptions,
               headers,
             });
           } catch (refreshError) {
@@ -259,52 +263,70 @@ export async function downloadFile(path) {
   const downloadFromResponse = async (response, originalPath) => {
     const contentType = response.headers.get('content-type');
     
-    // Handle JSON success where API returns a presigned URL for cloud storage
+    // Handle JSON response with presigned URL (S3 storage)
     if (contentType && contentType.includes('application/json')) {
       const data = await response.json();
       
       if (data && data.download_url) {
         const presignedUrl = data.download_url;
+        const filename = data.filename || extractFilename(originalPath, null);
         
-        // Fetch the file from the presigned URL (no auth headers needed)
-        const urlResp = await fetch(presignedUrl);
+        logger.info('Downloading from presigned URL:', presignedUrl);
         
-        if (!urlResp.ok) {
-          throw new Error(`Failed to fetch file from presigned URL: HTTP ${urlResp.status}`);
+        try {
+          // Fetch the file from the presigned URL (no auth headers, no credentials)
+          const urlResp = await fetch(presignedUrl, {
+            method: 'GET',
+            credentials: 'omit', // Don't send credentials to S3
+          });
+          
+          if (!urlResp.ok) {
+            throw new Error(`Failed to fetch file from S3: HTTP ${urlResp.status}`);
+          }
+          
+          const blob = await urlResp.blob();
+          
+          if (!blob || blob.size === 0) {
+            throw new Error('Downloaded file is empty');
+          }
+          
+          logger.info(`Downloaded ${blob.size} bytes, filename: ${filename}`);
+          triggerDownload(blob, filename);
+          return;
+        } catch (s3Error) {
+          logger.error('S3 download error:', s3Error);
+          throw new Error(`Failed to download file: ${s3Error.message}`);
         }
-        
-        const blob = await urlResp.blob();
-        
-        if (!blob || blob.size === 0) throw new Error('Downloaded file is empty');
-        
-        // Extract filename from the presigned URL or use a default
-        const filename = extractFilename(
-          originalPath, 
-          urlResp.headers.get('Content-Disposition') || urlResp.headers.get('content-disposition')
-        );
-        triggerDownload(blob, filename);
-        return;
       }
-      // JSON error
+      
+      // JSON error response
       const detail = data?.detail || 'Download failed';
       const err = new Error(detail);
       err.status = response.status;
       throw err;
     }
 
-    // Binary response path (local file download)
+    // Binary response (local file download)
     const blob = await response.blob();
-    if (!blob || blob.size === 0) throw new Error('Downloaded file is empty');
+    
+    if (!blob || blob.size === 0) {
+      throw new Error('Downloaded file is empty');
+    }
+    
     const filename = extractFilename(
       originalPath, 
       response.headers.get('Content-Disposition') || response.headers.get('content-disposition')
     );
+    
+    logger.info(`Downloaded ${blob.size} bytes (local), filename: ${filename}`);
     triggerDownload(blob, filename);
   };
 
   try {
+    logger.info('Starting download:', path);
     let response = await apiClient.download(path);
     await downloadFromResponse(response, path);
+    logger.info('Download completed successfully');
   } catch (error) {
     logger.error('Download error:', error);
     throw error;

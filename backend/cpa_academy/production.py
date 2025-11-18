@@ -42,11 +42,16 @@ AWS_S3_REGION_NAME = os.getenv("AWS_S3_REGION_NAME", "us-east-1")
 # Ensure media is not stored locally in production
 # MEDIA_ROOT is intentionally not set when using S3
 
-# CORS settings for production
-CORS_ALLOWED_ORIGINS = [
-    "https://yourdomain.com",
-    "https://www.yourdomain.com",
-]
+# CORS settings for production - extend the base settings, don't replace
+# Add production-specific origins if needed
+production_origins = os.getenv("PRODUCTION_CORS_ORIGINS", "").split(",")
+if production_origins and production_origins[0]:
+    CORS_ALLOWED_ORIGINS.extend([origin.strip() for origin in production_origins if origin.strip()])
+
+# Ensure CSRF trusted origins include production domains
+production_csrf_origins = os.getenv("PRODUCTION_CSRF_ORIGINS", "").split(",")
+if production_csrf_origins and production_csrf_origins[0]:
+    CSRF_TRUSTED_ORIGINS.extend([origin.strip() for origin in production_csrf_origins if origin.strip()])
 
 # Email configuration
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'

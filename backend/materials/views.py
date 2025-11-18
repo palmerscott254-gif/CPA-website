@@ -114,11 +114,14 @@ class MaterialDetailView(generics.RetrieveDestroyAPIView):
 
 
 @api_view(["GET"])
-@permission_classes([permissions.IsAuthenticated])
+@permission_classes([permissions.IsAuthenticatedOrReadOnly])
 def material_download_view(request, pk):
     """
     Production-ready download endpoint.
-    Returns a presigned S3 URL (S3 storage) or serves file directly (local storage).
+    - For public materials: allows authenticated and anonymous users
+    - For private materials: requires authentication and ownership
+    - Returns presigned S3 URL (cloud) or serves file directly (local)
+    - Always returns downloadable file with Content-Disposition: attachment
     """
     logger = logging.getLogger(__name__)
     
@@ -128,8 +131,12 @@ def material_download_view(request, pk):
     except Material.DoesNotExist:
         return Response({"detail": "Material not found."}, status=status.HTTP_404_NOT_FOUND)
 
-    # Check permissions
+    # Check permissions - only restrict for private materials
     if not material.is_public:
+        # Private materials require authentication
+        if not request.user.is_authenticated:
+            return Response({"detail": "Authentication required to download this material."}, status=status.HTTP_401_UNAUTHORIZED)
+        # Check ownership/staff permissions
         if not (request.user.is_staff or request.user.is_superuser or material.uploaded_by == request.user):
             return Response({"detail": "You do not have permission to download this material."}, status=status.HTTP_403_FORBIDDEN)
 
@@ -144,34 +151,64 @@ def material_download_view(request, pk):
     storage = material.file.storage
     is_s3 = 'S3' in storage.__class__.__name__
 
+    # Extract clean filename
+    filename = os.path.basename(material.file.name)
+
     # S3: Return presigned URL
     if is_s3:
         try:
-            # Try django-storages method first
-            presigned_url = storage.url(material.file.name)
-            logger.info(f"Download: Material {pk} by user {request.user.id}")
-            return Response({"download_url": presigned_url}, status=status.HTTP_200_OK)
-        except Exception:
-            # Fallback to boto3 direct method
-            presigned_url = generate_s3_presigned_url(material.file.name)
+            # Generate presigned URL with proper content disposition
+            presigned_url = generate_s3_presigned_url(material.file.name, expiration=3600)
             if presigned_url:
-                logger.info(f"Download (boto3): Material {pk} by user {request.user.id}")
-                return Response({"download_url": presigned_url}, status=status.HTTP_200_OK)
-            logger.error(f"Failed to generate presigned URL for material {pk}")
+                logger.info(f"Download: Material {pk} ({filename}) - S3 presigned URL generated")
+                return Response({
+                    "download_url": presigned_url,
+                    "filename": filename,
+                    "content_type": material.file_type or "application/octet-stream"
+                }, status=status.HTTP_200_OK)
+            
+            # If presigned generation failed, try storage.url as fallback
+            presigned_url = storage.url(material.file.name)
+            logger.info(f"Download: Material {pk} ({filename}) - Using storage.url fallback")
+            return Response({
+                "download_url": presigned_url,
+                "filename": filename,
+                "content_type": material.file_type or "application/octet-stream"
+            }, status=status.HTTP_200_OK)
+            
+        except Exception as e:
+            logger.error(f"Failed to generate presigned URL for material {pk}: {e}")
             return Response({"detail": "Failed to generate download link."}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
-    # Local: Serve file directly
+    # Local: Serve file directly with proper headers
     try:
         if not storage.exists(material.file.name):
             return Response({"detail": "File not found in storage."}, status=status.HTTP_404_NOT_FOUND)
 
-        filename = os.path.basename(material.file.name)
-        from io import BytesIO
-        with material.file.open('rb') as fh:
-            data = fh.read()
+        # Determine content type based on file extension
+        content_type_map = {
+            'pdf': 'application/pdf',
+            'doc': 'application/msword',
+            'docx': 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+            'ppt': 'application/vnd.ms-powerpoint',
+            'pptx': 'application/vnd.openxmlformats-officedocument.presentationml.presentation',
+            'mp4': 'video/mp4',
+            'avi': 'video/x-msvideo',
+            'mov': 'video/quicktime',
+        }
+        content_type = content_type_map.get(material.file_type, 'application/octet-stream')
+
+        # Open and read file
+        file_handle = material.file.open('rb')
         
-        logger.info(f"Download (local): Material {pk} by user {request.user.id}")
-        return FileResponse(BytesIO(data), as_attachment=True, filename=filename)
+        # Create FileResponse with proper headers
+        response = FileResponse(file_handle, content_type=content_type)
+        response['Content-Disposition'] = f'attachment; filename="{filename}"'
+        response['Content-Length'] = material.file.size
+        
+        logger.info(f"Download (local): Material {pk} ({filename})")
+        return response
+        
     except Exception as e:
         logger.error(f"Download error for material {pk}: {e}")
         return Response({"detail": "Error downloading file."}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)

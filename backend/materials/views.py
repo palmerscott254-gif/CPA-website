@@ -6,12 +6,10 @@ from rest_framework.parsers import MultiPartParser, FormParser
 from django.http import FileResponse
 from rest_framework.decorators import api_view, permission_classes
 from django.db.models import F, Q
-from rest_framework.exceptions import PermissionDenied
 from django.conf import settings
 import os
 import logging
 import boto3
-from botocore.exceptions import ClientError
 
 class MaterialListView(generics.ListAPIView):
     serializer_class = MaterialSerializer

@@ -105,10 +105,23 @@ htmlcov/
 # Backup files
 *~
 *.bak
+*.swp
+*.swo
 
 # Logs
 logs/
 *.log
+
+# Test and temporary files
+quick_test.py
+test_*.py
+*_test.py
+temp/
+tmp/
+*.tmp
+
+# Empty directories
+materials/materials/
 
 # Other
 .DS_Store

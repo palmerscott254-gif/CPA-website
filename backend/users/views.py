@@ -1,9 +1,3 @@
-from allauth.socialaccount.providers.google.provider import GoogleProvider
-from allauth.socialaccount.models import SocialAccount
-from allauth.socialaccount.helpers import complete_social_login
-from allauth.socialaccount.adapter import get_adapter as get_social_adapter
-from allauth.socialaccount.providers.google.views import GoogleOAuth2Adapter
-from allauth.socialaccount.providers.oauth2.client import OAuth2Error
 from django.contrib.auth import get_user_model
 from django.conf import settings
 import requests
@@ -57,13 +51,14 @@ def google_id_token_login(request):
         "access": access,
         "refresh": str(refresh),
     })
+
+
 from rest_framework import generics, permissions
 from .serializers import RegisterSerializer, UserSerializer
 from .models import User
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework_simplejwt.views import TokenObtainPairView
-from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 from allauth.socialaccount.providers.google.views import GoogleOAuth2Adapter
 from allauth.socialaccount.providers.oauth2.client import OAuth2Client

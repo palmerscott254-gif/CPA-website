@@ -1,23 +1,34 @@
 [
   {
     "AllowedHeaders": [
-      "*"
+      "Authorization",
+      "Content-Type",
+      "Content-Disposition",
+      "Range",
+      "X-Requested-With",
+      "x-amz-meta-*",
+      "x-amz-request-id",
+      "Origin",
+      "Accept",
+      "Cache-Control"
     ],
     "AllowedMethods": [
       "GET",
-      "HEAD"
+      "HEAD",
+      "OPTIONS"
     ],
     "AllowedOrigins": [
       "http://localhost:3000",
       "http://127.0.0.1:3000",
-      "https://cpa-website-1.onrender.com",
-      "https://your-vercel-app.vercel.app"
+      "http://localhost:8000",
+      "http://127.0.0.1:8000",
+      "https://cpa-website-lvup.onrender.com",
+      "https://cpa-website-1.onrender.com"
     ],
     "ExposeHeaders": [
       "ETag",
-      "Content-Type",
-      "Content-Length",
-      "Content-Disposition"
+      "Content-Disposition",
+      "Accept-Ranges"
     ],
     "MaxAgeSeconds": 3600
   }

@@ -216,6 +216,8 @@ CORS_ALLOWED_ORIGINS = [
     "http://localhost:3000",
     "http://127.0.0.1:3000",
     "https://cpa-website-1.onrender.com",
+    "https://cpa-website-lvup.onrender.com",
+    "https://cpa-academy-frontend.onrender.com",
 ]
 
 if os.getenv("CORS_ALLOWED_ORIGINS"):
@@ -253,6 +255,7 @@ CORS_EXPOSE_HEADERS = [
     'Content-Disposition',
     'Content-Type',
     'Content-Length',
+    'Accept-Ranges',
 ]
 
 # CSRF Configuration

@@ -12,10 +12,16 @@ admin.site.index_title = "Welcome to CPA Web Control Panel"
 # Register models for admin interface
 @admin.register(User)
 class UserAdmin(admin.ModelAdmin):
-    list_display = ('username', 'email', 'first_name', 'last_name', 'is_admin', 'date_joined')
-    list_filter = ('is_admin', 'is_active', 'date_joined')
+    list_display = ('username', 'email', 'first_name', 'last_name', 'is_admin', 'last_login', 'date_joined')
+    list_filter = ('is_admin', 'is_active', 'date_joined', 'last_login')
     search_fields = ('username', 'email', 'first_name', 'last_name')
     ordering = ('-date_joined',)
+    
+    def changelist_view(self, request, extra_context=None):
+        extra_context = extra_context or {}
+        extra_context['total_users'] = User.objects.count()
+        extra_context['users_logged_in'] = User.objects.filter(last_login__isnull=False).count()
+        return super().changelist_view(request, extra_context=extra_context)
 
 @admin.register(Subject)
 class SubjectAdmin(admin.ModelAdmin):

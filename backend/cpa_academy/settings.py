@@ -66,7 +66,7 @@ ACCOUNT_UNIQUE_EMAIL = True
 ACCOUNT_USERNAME_REQUIRED = False
 
 SOCIALACCOUNT_ADAPTER = 'users.adapters.MySocialAccountAdapter'
-ACCOUNT_ADAPTER = 'users.adapters.MySocialAccountAdapter'
+ACCOUNT_ADAPTER = 'users.adapters.MyAccountAdapter'
 SOCIALACCOUNT_LOGIN_ON_GET = True
 
 REST_AUTH = {

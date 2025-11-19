@@ -1,6 +1,11 @@
+from allauth.account.adapter import DefaultAccountAdapter
 from allauth.socialaccount.adapter import DefaultSocialAccountAdapter
 from django.conf import settings
 from rest_framework_simplejwt.tokens import RefreshToken
+
+class MyAccountAdapter(DefaultAccountAdapter):
+    """Custom account adapter for django-allauth"""
+    pass
 
 class MySocialAccountAdapter(DefaultSocialAccountAdapter):
     def get_login_redirect_url(self, request, socialaccount):

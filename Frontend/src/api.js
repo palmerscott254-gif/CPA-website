@@ -269,34 +269,16 @@ export async function downloadFile(path) {
       
       if (data && data.download_url) {
         const presignedUrl = data.download_url;
-        const filename = data.filename || extractFilename(originalPath, null);
-        
-        logger.info('Downloading from presigned URL:', presignedUrl);
-        
-        try {
-          // Fetch the file from the presigned URL (no auth headers, no credentials)
-          const urlResp = await fetch(presignedUrl, {
-            method: 'GET',
-            credentials: 'omit', // Don't send credentials to S3
-          });
-          
-          if (!urlResp.ok) {
-            throw new Error(`Failed to fetch file from S3: HTTP ${urlResp.status}`);
-          }
-          
-          const blob = await urlResp.blob();
-          
-          if (!blob || blob.size === 0) {
-            throw new Error('Downloaded file is empty');
-          }
-          
-          logger.info(`Downloaded ${blob.size} bytes, filename: ${filename}`);
-          triggerDownload(blob, filename);
-          return;
-        } catch (s3Error) {
-          logger.error('S3 download error:', s3Error);
-          throw new Error(`Failed to download file: ${s3Error.message}`);
-        }
+        logger.info('Navigating to presigned URL for instant download:', presignedUrl);
+        // Let the browser handle the download stream directly from S3
+        const a = document.createElement('a');
+        a.href = presignedUrl;
+        a.rel = 'noopener';
+        a.target = '_self';
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        return;
       }
       
       // JSON error response

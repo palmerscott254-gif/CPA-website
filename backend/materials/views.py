@@ -3,7 +3,7 @@ from .models import Material
 from .serializers import MaterialSerializer
 from rest_framework.response import Response
 from rest_framework.parsers import MultiPartParser, FormParser
-from django.http import FileResponse
+from django.http import FileResponse, HttpResponseRedirect
 from rest_framework.decorators import api_view, permission_classes
 from django.db.models import F, Q
 from django.conf import settings
@@ -66,9 +66,6 @@ def generate_s3_presigned_url(file_name, expiration=3600):
         
         bucket = getattr(settings, 'AWS_STORAGE_BUCKET_NAME')
         filename = os.path.basename(file_name)
-        
-        # Verify object exists
-        s3_client.head_object(Bucket=bucket, Key=file_name)
         
         # Generate presigned URL
         url = s3_client.generate_presigned_url(
@@ -152,13 +149,19 @@ def material_download_view(request, pk):
     # Extract clean filename
     filename = os.path.basename(material.file.name)
 
-    # S3: Return presigned URL
+    # S3: Return presigned URL (optionally redirect immediately)
     if is_s3:
         try:
             # Generate presigned URL with proper content disposition
             presigned_url = generate_s3_presigned_url(material.file.name, expiration=3600)
             if presigned_url:
                 logger.info(f"Download: Material {pk} ({filename}) - S3 presigned URL generated")
+                # If redirect requested, issue a 302 to the presigned URL for instant download
+                redirect_param = request.query_params.get('redirect') or request.query_params.get('r')
+                if redirect_param and redirect_param.lower() in ("1", "true", "yes"): 
+                    return HttpResponseRedirect(presigned_url)
+
+                # Default: return JSON for clients that want to handle it
                 return Response({
                     "download_url": presigned_url,
                     "filename": filename,

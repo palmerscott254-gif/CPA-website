@@ -15,7 +15,7 @@ import {
   CheckCircle,
   AlertCircle
 } from "lucide-react";
-import { fetchJSON, downloadFile } from "../api";
+import apiClient, { fetchJSON, downloadFile } from "../api";
 import { logger } from "../utils/logger";
 
 const Materials = () => {
@@ -115,6 +115,8 @@ const Materials = () => {
       }, 3000);
     }
   };
+
+  const directDownloadHref = (materialId) => `${apiClient.baseURL}/materials/${materialId}/download/?redirect=1`;
 
   const filteredMaterials = materials.filter(material => {
     if (filterType === "all") return true;
@@ -414,11 +416,22 @@ const Materials = () => {
                           </div>
                         </div>
 
-                        <button
-                          onClick={() => handleDownload(material)}
-                          disabled={downloading === material.id}
-                          className="w-full btn-primary py-3 inline-flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed"
-                        >
+                        {material.is_public ? (
+                          <a
+                            href={directDownloadHref(material.id)}
+                            onClick={() => setDownloading(material.id)}
+                            className="w-full btn-primary py-3 inline-flex items-center justify-center"
+                            rel="noopener"
+                          >
+                            <ArrowDown className="w-4 h-4 mr-2" />
+                            Download Material
+                          </a>
+                        ) : (
+                          <button
+                            onClick={() => handleDownload(material)}
+                            disabled={downloading === material.id}
+                            className="w-full btn-primary py-3 inline-flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed"
+                          >
                           {downloadStatus[material.id] === "downloading" ? (
                             <>
                               <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2"></div>
@@ -440,7 +453,8 @@ const Materials = () => {
                               Download Material
                             </>
                           )}
-                        </button>
+                          </button>
+                        )}
                       </>
                     ) : (
                       <>
@@ -495,33 +509,45 @@ const Materials = () => {
                               </div>
                             </div>
                             
-                            <button
-                              onClick={() => handleDownload(material)}
-                              disabled={downloading === material.id}
-                              className="btn-primary py-2 px-6 inline-flex items-center text-sm disabled:opacity-50 disabled:cursor-not-allowed"
-                            >
-                              {downloadStatus[material.id] === "downloading" ? (
-                                <>
-                                  <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2"></div>
-                                  Downloading...
-                                </>
-                              ) : downloadStatus[material.id] === "success" ? (
-                                <>
-                                  <CheckCircle className="w-4 h-4 mr-2" />
-                                  Download Complete
-                                </>
-                              ) : downloadStatus[material.id] === "error" ? (
-                                <>
-                                  <AlertCircle className="w-4 h-4 mr-2" />
-                                  Download Failed
-                                </>
-                              ) : (
-                                <>
-                                  <ArrowDown className="w-4 h-4 mr-2" />
-                                  Download
-                                </>
-                              )}
-                            </button>
+                            {material.is_public ? (
+                              <a
+                                href={directDownloadHref(material.id)}
+                                onClick={() => setDownloading(material.id)}
+                                className="btn-primary py-2 px-6 inline-flex items-center text-sm"
+                                rel="noopener"
+                              >
+                                <ArrowDown className="w-4 h-4 mr-2" />
+                                Download
+                              </a>
+                            ) : (
+                              <button
+                                onClick={() => handleDownload(material)}
+                                disabled={downloading === material.id}
+                                className="btn-primary py-2 px-6 inline-flex items-center text-sm disabled:opacity-50 disabled:cursor-not-allowed"
+                              >
+                                {downloadStatus[material.id] === "downloading" ? (
+                                  <>
+                                    <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2"></div>
+                                    Downloading...
+                                  </>
+                                ) : downloadStatus[material.id] === "success" ? (
+                                  <>
+                                    <CheckCircle className="w-4 h-4 mr-2" />
+                                    Download Complete
+                                  </>
+                                ) : downloadStatus[material.id] === "error" ? (
+                                  <>
+                                    <AlertCircle className="w-4 h-4 mr-2" />
+                                    Download Failed
+                                  </>
+                                ) : (
+                                  <>
+                                    <ArrowDown className="w-4 h-4 mr-2" />
+                                    Download
+                                  </>
+                                )}
+                              </button>
+                            )}
                           </div>
                         </div>
                       </>

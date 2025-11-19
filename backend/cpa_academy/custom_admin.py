@@ -30,7 +30,9 @@ class UserAdmin(BaseUserAdmin):
     )
     
     def changelist_view(self, request, extra_context=None):
-        extra_context = extra_context or {}
+        if extra_context is None:
+            extra_context = {}
+        extra_context = dict(extra_context)
         extra_context['total_users'] = User.objects.count()
         extra_context['users_logged_in'] = User.objects.filter(last_login__isnull=False).count()
         return super().changelist_view(request, extra_context=extra_context)

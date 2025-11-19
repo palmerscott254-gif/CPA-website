@@ -1,4 +1,5 @@
 from django.contrib import admin
+from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
 from users.models import User
 from courses.models import Subject, Unit
 from materials.models import Material
@@ -9,13 +10,24 @@ admin.site.site_header = "CPA Web Administration"
 admin.site.site_title = "CPA Web Admin Portal"
 admin.site.index_title = "Welcome to CPA Web Control Panel"
 
+# Unregister allauth's User admin if it exists
+try:
+    admin.site.unregister(User)
+except admin.sites.NotRegistered:
+    pass
+
 # Register models for admin interface
 @admin.register(User)
-class UserAdmin(admin.ModelAdmin):
-    list_display = ('username', 'email', 'first_name', 'last_name', 'is_admin', 'last_login', 'date_joined')
-    list_filter = ('is_admin', 'is_active', 'date_joined', 'last_login')
+class UserAdmin(BaseUserAdmin):
+    list_display = ('username', 'email', 'first_name', 'last_name', 'is_admin', 'is_staff', 'last_login', 'date_joined')
+    list_filter = ('is_admin', 'is_staff', 'is_superuser', 'is_active', 'date_joined', 'last_login')
     search_fields = ('username', 'email', 'first_name', 'last_name')
     ordering = ('-date_joined',)
+    
+    # Add is_admin to the fieldsets
+    fieldsets = BaseUserAdmin.fieldsets + (
+        ('Custom Fields', {'fields': ('is_admin',)}),
+    )
     
     def changelist_view(self, request, extra_context=None):
         extra_context = extra_context or {}

@@ -149,6 +149,21 @@ if USE_S3:
     AWS_STORAGE_BUCKET_NAME = os.getenv("AWS_STORAGE_BUCKET_NAME", "cpa-academy-media")
     AWS_S3_REGION_NAME = os.getenv("AWS_S3_REGION_NAME", "us-east-1")
     AWS_S3_SIGNATURE_VERSION = "s3v4"
+    
+    # Validate critical AWS credentials
+    if not AWS_ACCESS_KEY_ID or not AWS_SECRET_ACCESS_KEY:
+        import logging
+        logger = logging.getLogger(__name__)
+        logger.critical("USE_S3=True but AWS_ACCESS_KEY_ID or AWS_SECRET_ACCESS_KEY not set!")
+        if not DEBUG:
+            raise RuntimeError("AWS credentials required when USE_S3=True in production")
+    
+    if not AWS_STORAGE_BUCKET_NAME:
+        import logging
+        logger = logging.getLogger(__name__)
+        logger.critical("USE_S3=True but AWS_STORAGE_BUCKET_NAME not set!")
+        if not DEBUG:
+            raise RuntimeError("AWS_STORAGE_BUCKET_NAME required when USE_S3=True in production")
 
     # Storage behavior
     AWS_S3_FILE_OVERWRITE = False          # Keep distinct versions if names collide

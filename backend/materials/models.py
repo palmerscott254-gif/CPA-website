@@ -1,11 +1,22 @@
 from django.db import models
 from django.conf import settings
 
+def material_upload_path(instance, filename):
+    """
+    Generate upload path for material files.
+    Ensures files go to 'materials/' directory in storage (S3 or local).
+    """
+    import os
+    # Sanitize filename to prevent path traversal
+    safe_filename = os.path.basename(filename)
+    return f"materials/{safe_filename}"
+
+
 class Material(models.Model):
     unit = models.ForeignKey("courses.Unit", on_delete=models.CASCADE, related_name="materials")
     title = models.CharField(max_length=255)
     description = models.TextField(blank=True)
-    file = models.FileField(upload_to="materials/")
+    file = models.FileField(upload_to=material_upload_path)
     file_type = models.CharField(max_length=10, blank=True)
     uploaded_by = models.ForeignKey(settings.AUTH_USER_MODEL, null=True, blank=True, on_delete=models.SET_NULL)
     upload_date = models.DateTimeField(auto_now_add=True)

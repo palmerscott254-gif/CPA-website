@@ -48,23 +48,55 @@ class MaterialCreateView(generics.CreateAPIView):
                 raise serializers.ValidationError({"file": f"Only {', '.join(allowed_extensions)} files are allowed."})
             if uploaded_file.size > 50 * 1024 * 1024:  # 50MB limit
                 raise serializers.ValidationError({"file": "Max size 50MB."})
-        serializer.save(uploaded_by=user)
+        
+        try:
+            material = serializer.save(uploaded_by=user)
+            storage = material.file.storage if material.file else None
+            is_s3 = storage and 'S3' in storage.__class__.__name__
+            storage_type = "S3" if is_s3 else "local"
+            logger.info(f"Material uploaded: {material.title} (ID: {material.id}) to {storage_type} storage")
+            if is_s3:
+                logger.info(f"S3 key: {material.file.name}")
+        except Exception as e:
+            logger.error(f"Failed to upload material: {e}", exc_info=True)
+            raise serializers.ValidationError({"file": f"Upload failed: {str(e)}"})
 
 
 def generate_s3_presigned_url(file_name, expiration=3600):
     """Generate a presigned URL for S3 object download."""
+    logger = logging.getLogger(__name__)
     try:
         from botocore.client import Config
+        from botocore.exceptions import ClientError, NoCredentialsError
+        
+        # Validate inputs
+        if not file_name:
+            logger.error("generate_s3_presigned_url called with empty file_name")
+            return None
+        
+        access_key = getattr(settings, 'AWS_ACCESS_KEY_ID', None)
+        secret_key = getattr(settings, 'AWS_SECRET_ACCESS_KEY', None)
+        bucket = getattr(settings, 'AWS_STORAGE_BUCKET_NAME', None)
+        region = getattr(settings, 'AWS_S3_REGION_NAME', 'us-east-1')
+        
+        if not access_key or not secret_key:
+            logger.error("AWS credentials not configured (AWS_ACCESS_KEY_ID or AWS_SECRET_ACCESS_KEY missing)")
+            return None
+        
+        if not bucket:
+            logger.error("AWS_STORAGE_BUCKET_NAME not configured")
+            return None
+        
+        logger.debug(f"Generating presigned URL for S3 key: {file_name} in bucket: {bucket}")
         
         s3_client = boto3.client(
             's3',
-            region_name=getattr(settings, 'AWS_S3_REGION_NAME', 'us-east-1'),
-            aws_access_key_id=getattr(settings, 'AWS_ACCESS_KEY_ID'),
-            aws_secret_access_key=getattr(settings, 'AWS_SECRET_ACCESS_KEY'),
+            region_name=region,
+            aws_access_key_id=access_key,
+            aws_secret_access_key=secret_key,
             config=Config(signature_version='s3v4')
         )
         
-        bucket = getattr(settings, 'AWS_STORAGE_BUCKET_NAME')
         filename = os.path.basename(file_name)
         
         # Generate presigned URL
@@ -77,9 +109,17 @@ def generate_s3_presigned_url(file_name, expiration=3600):
             },
             ExpiresIn=expiration
         )
+        logger.info(f"Successfully generated presigned URL for {file_name}")
         return url
+    except NoCredentialsError:
+        logger.error("AWS credentials not found or invalid", exc_info=True)
+        return None
+    except ClientError as e:
+        error_code = e.response.get('Error', {}).get('Code', 'Unknown')
+        logger.error(f"S3 ClientError ({error_code}) generating presigned URL for {file_name}: {e}", exc_info=True)
+        return None
     except Exception as e:
-        logging.getLogger(__name__).error(f"S3 presigned URL generation failed: {e}")
+        logger.error(f"Unexpected error generating presigned URL for {file_name}: {e}", exc_info=True)
         return None
 
 
@@ -148,14 +188,24 @@ def material_download_view(request, pk):
 
     # Extract clean filename
     filename = os.path.basename(material.file.name)
+    
+    # Log storage type and file key
+    logger.info(f"Download request for Material {pk}: {filename} (storage: {'S3' if is_s3 else 'local'}, key: {material.file.name})")
 
     # S3: Return presigned URL (optionally redirect immediately)
     if is_s3:
         try:
+            # Verify file exists in S3 before generating presigned URL
+            if not storage.exists(material.file.name):
+                logger.error(f"S3 key not found: {material.file.name} for Material {pk}")
+                return Response({
+                    "detail": f"File not found in S3 storage. Key: {material.file.name}"
+                }, status=status.HTTP_404_NOT_FOUND)
+            
             # Generate presigned URL with proper content disposition
             presigned_url = generate_s3_presigned_url(material.file.name, expiration=3600)
             if presigned_url:
-                logger.info(f"Download: Material {pk} ({filename}) - S3 presigned URL generated")
+                logger.info(f"Download: Material {pk} ({filename}) - S3 presigned URL generated successfully")
                 # If redirect requested, issue a 302 to the presigned URL for instant download
                 redirect_param = request.query_params.get('redirect') or request.query_params.get('r')
                 if redirect_param and redirect_param.lower() in ("1", "true", "yes"): 
@@ -169,17 +219,24 @@ def material_download_view(request, pk):
                 }, status=status.HTTP_200_OK)
             
             # If presigned generation failed, try storage.url as fallback
-            presigned_url = storage.url(material.file.name)
-            logger.info(f"Download: Material {pk} ({filename}) - Using storage.url fallback")
-            return Response({
-                "download_url": presigned_url,
-                "filename": filename,
-                "content_type": material.file_type or "application/octet-stream"
-            }, status=status.HTTP_200_OK)
+            logger.warning(f"Presigned URL generation failed for Material {pk}, trying storage.url fallback")
+            try:
+                presigned_url = storage.url(material.file.name)
+                logger.info(f"Download: Material {pk} ({filename}) - Using storage.url fallback")
+                return Response({
+                    "download_url": presigned_url,
+                    "filename": filename,
+                    "content_type": material.file_type or "application/octet-stream"
+                }, status=status.HTTP_200_OK)
+            except Exception as fallback_error:
+                logger.error(f"storage.url fallback also failed for Material {pk}: {fallback_error}", exc_info=True)
+                return Response({
+                    "detail": "Failed to generate download link. Please check S3 configuration."
+                }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
             
         except Exception as e:
-            logger.error(f"Failed to generate presigned URL for material {pk}: {e}")
-            return Response({"detail": "Failed to generate download link."}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+            logger.error(f"Failed to generate presigned URL for material {pk}: {e}", exc_info=True)
+            return Response({"detail": f"Failed to generate download link: {str(e)}"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
     # Local: Serve file directly with proper headers
     try:

@@ -82,8 +82,8 @@ const NavBar = () => {
       animate={{ y: 0 }}
       className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
         scrolled
-          ? "border-b border-slate-200 bg-white/95 shadow-sm backdrop-blur dark:border-slate-700 dark:bg-slate-900/95"
-          : "border-b border-slate-200 bg-white dark:border-slate-700 dark:bg-slate-900"
+          ? "border-b border-slate-200 bg-white/95 shadow-sm backdrop-blur dark:border-slate-800 dark:bg-black/95"
+          : "border-b border-slate-200 bg-white dark:border-slate-800 dark:bg-black"
       }`}
     >
       <div className="container-modern">
@@ -184,7 +184,7 @@ const NavBar = () => {
               animate={{ opacity: 1, height: "auto" }}
               exit={{ opacity: 0, height: 0 }}
               transition={{ duration: 0.2 }}
-              className="border-t border-slate-200 bg-white py-3 dark:border-slate-700 dark:bg-slate-900 lg:hidden"
+              className="border-t border-slate-200 bg-white py-3 dark:border-slate-800 dark:bg-black lg:hidden"
             >
               <div className="space-y-1">
                 {navItems.map((item) => {

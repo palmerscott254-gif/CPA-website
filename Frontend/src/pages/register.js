@@ -123,12 +123,7 @@ const Register = () => {
   ];
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-primary-50 via-white to-accent-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 py-12 px-4">
-      {/* Background Elements */}
-      <div className="absolute inset-0 overflow-hidden">
-        <div className="absolute -top-40 -right-40 w-80 h-80 bg-primary-200 dark:bg-primary-800 rounded-full mix-blend-multiply dark:mix-blend-normal filter blur-xl opacity-70 animate-float"></div>
-        <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-accent-200 dark:bg-accent-800 rounded-full mix-blend-multiply dark:mix-blend-normal filter blur-xl opacity-70 animate-float" style={{ animationDelay: '2s' }}></div>
-      </div>
+    <div className="page-surface min-h-screen flex items-center justify-center py-12 px-4">
 
       <motion.div
         variants={containerVariants}
@@ -143,7 +138,7 @@ const Register = () => {
         >
           <Link
             to="/"
-            className="inline-flex items-center space-x-2 text-3xl font-bold text-gradient"
+            className="inline-flex items-center space-x-2 text-2xl font-semibold text-slate-900 dark:text-slate-100"
           >
             <BookOpen className="w-8 h-8 text-primary-600" />
             <span>CPA Academy</span>
@@ -335,19 +330,12 @@ const Register = () => {
               </div>
               <div className="ml-3 text-sm">
                 <label className="text-gray-600 dark:text-gray-300">
-                  I agree to the{" "}
+                  I agree to the platform terms and privacy policy. For details, contact{" "}
                   <Link
-                    to="/terms"
+                    to="/contact"
                     className="text-primary-600 dark:text-primary-400 hover:text-primary-700 dark:hover:text-primary-300 font-medium"
                   >
-                    Terms of Service
-                  </Link>{" "}
-                  and{" "}
-                  <Link
-                    to="/privacy"
-                    className="text-primary-600 dark:text-primary-400 hover:text-primary-700 dark:hover:text-primary-300 font-medium"
-                  >
-                    Privacy Policy
+                    support
                   </Link>
                 </label>
               </div>

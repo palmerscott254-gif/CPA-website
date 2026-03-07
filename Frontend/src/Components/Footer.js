@@ -1,13 +1,8 @@
 import React from "react";
 import { Link } from "react-router-dom";
-import { motion } from "framer-motion";
 import { 
   BookOpen, 
   Mail, 
-  Facebook,
-  Twitter,
-  Linkedin,
-  Instagram,
   Clock
 } from "lucide-react";
 
@@ -15,70 +10,43 @@ const Footer = () => {
   const currentYear = new Date().getFullYear();
 
   const footerLinks = {
-    quickLinks: [
+    platform: [
       { name: "Home", path: "/" },
       { name: "Units", path: "/units" },
       { name: "Materials", path: "/materials" },
       { name: "Quizzes", path: "/quizzes" },
     ],
-    about: [
-      { name: "Our Mission", path: "/missions" },
-      { name: "Contact Support", path: "/contact" },
+    company: [
+      { name: "Mission", path: "/missions" },
+      { name: "Contact", path: "/contact" },
+      { name: "Login", path: "/login" },
+      { name: "Register", path: "/register" },
     ]
   };
 
-  const socialLinks = [
-    { icon: Facebook, href: "#!", label: "Facebook" },
-    { icon: Twitter, href: "#!", label: "Twitter" },
-    { icon: Linkedin, href: "#!", label: "LinkedIn" },
-    { icon: Instagram, href: "#!", label: "Instagram" }
-  ];
-
   return (
-    <footer className="bg-gray-900 text-gray-300">
-      {/* Main Footer Content */}
-      <div className="container-modern py-12 lg:py-16">
-        <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
-          {/* Brand Section */}
+    <footer className="border-t border-slate-200 bg-white dark:border-slate-700 dark:bg-slate-900">
+      <div className="container-modern py-10">
+        <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-4">
           <div className="space-y-4">
-            <Link to="/" className="flex items-center space-x-2 text-2xl font-bold text-white">
-              <BookOpen className="w-8 h-8 text-primary-500" />
+            <Link to="/" className="flex items-center gap-2 text-lg font-semibold text-slate-900 dark:text-slate-100">
+              <BookOpen className="h-6 w-6 text-primary-600" />
               <span>CPA Academy</span>
             </Link>
-            <p className="text-gray-400 leading-relaxed">
-              Empowering future CPAs with comprehensive learning resources and expert guidance.
+            <p className="text-sm leading-relaxed text-slate-600 dark:text-slate-300">
+              Practical, structured CPA preparation with focused units, materials, and practice quizzes.
             </p>
-            <div className="flex space-x-4">
-              {socialLinks.map((social) => {
-                const Icon = social.icon;
-                return (
-                  <motion.a
-                    key={social.label}
-                    href="#"
-                    onClick={(e) => e.preventDefault()}
-                    whileHover={{ scale: 1.1, y: -2 }}
-                    whileTap={{ scale: 0.95 }}
-                    className="w-10 h-10 bg-gray-800 hover:bg-primary-600 rounded-lg flex items-center justify-center transition-colors duration-300"
-                    aria-label={social.label}
-                  >
-                    <Icon className="w-5 h-5" />
-                  </motion.a>
-                );
-              })}
-            </div>
           </div>
 
-          {/* Quick Links */}
           <div>
-            <h3 className="text-white font-semibold text-lg mb-4">Quick Links</h3>
-            <ul className="space-y-3">
-              {footerLinks.quickLinks.map((link) => (
+            <h3 className="mb-3 text-sm font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">Platform</h3>
+            <ul className="space-y-2">
+              {footerLinks.platform.map((link) => (
                 <li key={link.name}>
                   <Link
                     to={link.path}
-                    className="hover:text-primary-400 transition-colors duration-300 inline-flex items-center"
+                    className="text-sm text-slate-600 transition-colors hover:text-primary-700 dark:text-slate-300 dark:hover:text-primary-300"
                   >
-                    <span className="mr-2">→</span>
                     {link.name}
                   </Link>
                 </li>
@@ -86,17 +54,15 @@ const Footer = () => {
             </ul>
           </div>
 
-          {/* About Links */}
           <div>
-            <h3 className="text-white font-semibold text-lg mb-4">About</h3>
-            <ul className="space-y-3">
-              {footerLinks.about.map((link) => (
+            <h3 className="mb-3 text-sm font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">Company</h3>
+            <ul className="space-y-2">
+              {footerLinks.company.map((link) => (
                 <li key={link.name}>
                   <Link
                     to={link.path}
-                    className="hover:text-primary-400 transition-colors duration-300 inline-flex items-center"
+                    className="text-sm text-slate-600 transition-colors hover:text-primary-700 dark:text-slate-300 dark:hover:text-primary-300"
                   >
-                    <span className="mr-2">→</span>
                     {link.name}
                   </Link>
                 </li>
@@ -104,61 +70,34 @@ const Footer = () => {
             </ul>
           </div>
 
-          {/* Contact Support */}
           <div>
-            <h3 className="text-white font-semibold text-lg mb-4">Contact Support</h3>
-            <div className="space-y-4">
-              <div className="flex items-start space-x-3">
-                <Clock className="w-5 h-5 text-primary-500 mt-1 flex-shrink-0" />
+            <h3 className="mb-3 text-sm font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">Support</h3>
+            <div className="space-y-3">
+              <div className="flex items-start gap-2 text-sm text-slate-600 dark:text-slate-300">
+                <Clock className="mt-0.5 h-4 w-4 flex-shrink-0 text-primary-600" />
                 <div>
-                  <p className="text-white font-medium">24-Hour Response Time</p>
-                  <p className="text-sm text-gray-400">We reply within 24 hours</p>
+                  <p className="font-medium text-slate-900 dark:text-slate-100">24-hour response</p>
+                  <p>Monday to Sunday support</p>
                 </div>
               </div>
-              <div className="flex items-start space-x-3">
-                <Mail className="w-5 h-5 text-primary-500 mt-1 flex-shrink-0" />
-                <div>
-                  <p className="text-sm text-gray-400">Email us at:</p>
-                  <a 
-                    href="mailto:support@cpaacademy.com"
-                    className="text-white hover:text-primary-400 transition-colors duration-300"
-                  >
-                    support@cpaacademy.com
-                  </a>
-                </div>
+              <div className="flex items-center gap-2 text-sm text-slate-600 dark:text-slate-300">
+                <Mail className="h-4 w-4 text-primary-600" />
+                <a href="mailto:support@cpaacademy.com" className="transition-colors hover:text-primary-700 dark:hover:text-primary-300">
+                  support@cpaacademy.com
+                </a>
               </div>
             </div>
           </div>
         </div>
       </div>
 
-      {/* Bottom Bar */}
-      <div className="border-t border-gray-800">
-        <div className="container-modern py-6">
-          <div className="flex flex-col md:flex-row justify-between items-center space-y-4 md:space-y-0">
-            <p className="text-gray-400 text-sm">
+      <div className="border-t border-slate-200 dark:border-slate-700">
+        <div className="container-modern py-5">
+          <div className="flex flex-col items-start justify-between gap-2 text-sm text-slate-500 dark:text-slate-400 md:flex-row md:items-center">
+            <p>
               © {currentYear} CPA Academy. All rights reserved.
             </p>
-            <div className="flex space-x-6 text-sm">
-              <button 
-                onClick={() => {/* TODO: Implement privacy policy */}} 
-                className="hover:text-primary-400 transition-colors duration-300"
-              >
-                Privacy Policy
-              </button>
-              <button 
-                onClick={() => {/* TODO: Implement terms of service */}} 
-                className="hover:text-primary-400 transition-colors duration-300"
-              >
-                Terms of Service
-              </button>
-              <button 
-                onClick={() => {/* TODO: Implement cookie policy */}} 
-                className="hover:text-primary-400 transition-colors duration-300"
-              >
-                Cookie Policy
-              </button>
-            </div>
+            <p>Built for focused CPA preparation.</p>
           </div>
         </div>
       </div>

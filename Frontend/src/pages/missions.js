@@ -33,58 +33,55 @@ const Missions = () => {
   const values = [
     {
       icon: BookOpen,
-      title: "Educational Excellence",
-      description: "We are committed to providing the highest quality learning materials and resources to ensure student success.",
+      title: "Clarity First",
+      description: "We explain difficult accounting topics in plain language, then reinforce them with practical examples.",
       color: "from-blue-500 to-blue-600"
     },
     {
       icon: Users,
-      title: "Accessibility",
-      description: "Making CPA education accessible to everyone, regardless of their background or financial situation.",
+      title: "Accessible Learning",
+      description: "Quality CPA prep should not depend on your location or budget, so we keep resources practical and affordable.",
       color: "from-green-500 to-green-600"
     },
     {
       icon: Lightbulb,
-      title: "Innovation",
-      description: "Continuously improving our platform with cutting-edge technology and modern learning methodologies.",
+      title: "Useful Innovation",
+      description: "We improve the platform when it saves learners time, reduces confusion, or improves retention.",
       color: "from-purple-500 to-purple-600"
     },
     {
       icon: Heart,
-      title: "Student-Centered",
-      description: "Every decision we make is guided by what's best for our students and their learning journey.",
+      title: "Student Focus",
+      description: "Every feature is measured by one question: does it help students study better and pass with confidence?",
       color: "from-pink-500 to-pink-600"
     },
     {
       icon: Globe,
-      title: "Global Community",
-      description: "Building a worldwide community of aspiring CPAs who support and learn from each other.",
+      title: "Community",
+      description: "Learning is easier with support, so we encourage collaboration, accountability, and shared progress.",
       color: "from-indigo-500 to-indigo-600"
     },
     {
       icon: Award,
-      title: "Excellence",
-      description: "Maintaining the highest standards in content quality, platform performance, and student support.",
+      title: "High Standards",
+      description: "We review content regularly and prioritize accuracy, relevance, and exam alignment.",
       color: "from-orange-500 to-orange-600"
     }
   ];
 
   const goals = [
-    "Provide comprehensive coverage of all CPA exam topics with regularly updated content",
-    "Create an engaging and interactive learning experience that adapts to each student's pace",
-    "Offer affordable and accessible education to aspiring accountants worldwide",
-    "Build a supportive community where students can collaborate and grow together",
-    "Leverage technology to make learning more efficient and effective",
-    "Maintain a 95%+ student satisfaction rate through continuous improvement",
-    "Partner with industry professionals to ensure real-world relevance",
-    "Provide 24/7 support to help students overcome challenges quickly"
+    "Keep every CPA section organized into clear, manageable study units",
+    "Update materials frequently to reflect current exam expectations",
+    "Provide quizzes that test understanding, not just memorization",
+    "Reduce study friction with a fast, simple, mobile-friendly platform",
+    "Build a community where learners can stay consistent and accountable"
   ];
 
   const stats = [
-    { number: "10,000+", label: "Students Enrolled" },
-    { number: "95%", label: "Pass Rate" },
-    { number: "500+", label: "Study Materials" },
-    { number: "4.9/5", label: "Average Rating" }
+    { number: "4", label: "CPA Exam Sections" },
+    { number: "24/7", label: "Anytime Access" },
+    { number: "Free", label: "Starter Resources" },
+    { number: "Self-paced", label: "Flexible Learning" }
   ];
 
   const containerVariants = {
@@ -132,17 +129,17 @@ const Missions = () => {
               className="inline-flex items-center px-4 py-2 rounded-full bg-primary-100 dark:bg-primary-900/30 text-primary-700 dark:text-primary-300 text-sm font-medium mb-6"
             >
               <Sparkles className="w-4 h-4 mr-2" />
-              Our Mission & Vision
+              Our Mission
             </motion.div>
 
             <h1 className="text-5xl md:text-6xl font-bold text-gray-900 dark:text-white mb-6 leading-tight">
-              Empowering Future 
-              <span className="text-gradient block">Accounting Leaders</span>
+              Built for Serious
+              <span className="text-gradient block">CPA Learners</span>
             </h1>
 
             <p className="text-xl md:text-2xl text-gray-600 dark:text-gray-300 leading-relaxed">
-              We're on a mission to democratize CPA education and make professional certification 
-              accessible to aspiring accountants worldwide.
+              We help aspiring accountants study smarter with clear explanations,
+              practical materials, and focused exam prep.
             </p>
           </motion.div>
         </div>
@@ -171,26 +168,21 @@ const Missions = () => {
 
             <motion.div variants={itemVariants} className="space-y-6 text-lg text-gray-700 dark:text-gray-300 leading-relaxed">
               <p className="text-xl font-medium text-gray-900 dark:text-white">
-                At CPA Academy, our mission is to democratize CPA education by making high-quality learning 
-                resources accessible to every aspiring accountant.
+                CPA Academy exists to make CPA preparation clear, affordable, and genuinely useful.
               </p>
               <p>
-                We believe that financial knowledge and professional certification should be within reach 
-                for all students, regardless of their background, location, or financial situation. Education 
-                is a fundamental right, and we're committed to breaking down the barriers that prevent 
-                talented individuals from achieving their professional goals.
+                We know most learners are balancing work, family, and limited study time.
+                That is why we focus on concise lessons, practical examples, and tools that help
+                you stay consistent week after week.
               </p>
               <p>
-                We aim to bridge the gap between traditional learning and modern education technology by 
-                providing comprehensive study materials, interactive quizzes, and structured learning paths 
-                that adapt to each student's unique pace and learning style. Our platform is designed to 
-                support you throughout your entire CPA journey, from foundational concepts to advanced 
-                exam preparation.
+                Our goal is simple: reduce confusion, improve confidence, and help you walk into
+                exam day prepared. We continuously refine content based on student feedback and
+                real learning outcomes.
               </p>
               <p>
-                Through continuous innovation and dedication to educational excellence, we strive to empower 
-                students with the knowledge, confidence, and skills needed to excel in their CPA examinations 
-                and build successful, fulfilling careers in accounting and finance.
+                Whether you are just starting or revising final topics, we are here to support
+                your progress with reliable resources and a clear path forward.
               </p>
             </motion.div>
           </motion.div>
@@ -305,7 +297,7 @@ const Missions = () => {
                 Our Goals & Aims
               </h2>
               <p className="text-xl text-gray-600 dark:text-gray-300">
-                What we're working towards every day to serve our students better
+                Practical priorities that improve student outcomes
               </p>
             </motion.div>
 
@@ -343,11 +335,11 @@ const Missions = () => {
             viewport={{ once: true }}
           >
             <h2 className="text-4xl md:text-5xl font-bold text-white mb-6">
-              Join Us in This Mission
+              Start Your CPA Journey
             </h2>
             <p className="text-xl text-primary-100 mb-8 max-w-2xl mx-auto">
-              Be part of a community dedicated to excellence in CPA education. 
-              Start your journey with us today.
+              Join a focused learning platform built to help you make steady progress,
+              one study session at a time.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <a

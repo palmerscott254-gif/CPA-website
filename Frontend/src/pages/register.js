@@ -214,7 +214,7 @@ const Register = () => {
                   value={formData.email}
                   onChange={handleChange}
                   required
-                  className="form-input pl-11"
+                  className="form-input form-input-icon-left"
                   placeholder="Enter your email"
                 />
               </div>
@@ -238,7 +238,7 @@ const Register = () => {
                   value={formData.password}
                   onChange={handleChange}
                   required
-                  className="form-input pl-11 pr-11"
+                  className="form-input form-input-icon-both"
                   placeholder="Create a password"
                 />
                 <button
@@ -297,7 +297,7 @@ const Register = () => {
                   value={formData.confirmPassword}
                   onChange={handleChange}
                   required
-                  className="form-input pl-11 pr-11"
+                  className="form-input form-input-icon-both"
                   placeholder="Confirm your password"
                 />
                 <button

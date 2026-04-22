@@ -76,7 +76,7 @@ const Units = () => {
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                   placeholder="Search by title, code, or description"
-                  className="form-input pl-11"
+                  className="form-input form-input-icon-left"
                 />
               </div>
             </label>

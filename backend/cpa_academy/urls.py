@@ -32,6 +32,14 @@ def storage_health(request):
     except Exception as e:
         return JsonResponse({"error": str(e)}, status=500)
 
+def ping(request):
+    """Lightweight liveness probe — no DB hit.
+
+    Used by external uptime/ping services to prevent the Render free-tier
+    instance from spinning down after 15 minutes of inactivity.
+    """
+    return JsonResponse({"status": "ok"})
+
 urlpatterns = [
     path("", api_root, name="api_root"),
     path("admin/", admin.site.urls),
@@ -42,6 +50,7 @@ urlpatterns = [
     path("api/materials/", include("materials.urls")),
     path("api/quizzes/", include("quizzes.urls")),
     path("api/health/storage/", storage_health, name="storage_health"),
+    path("api/ping/", ping, name="ping"),
 ]
 
 # Only serve media files locally in development

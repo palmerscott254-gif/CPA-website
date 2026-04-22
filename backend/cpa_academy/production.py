@@ -28,6 +28,12 @@ DATABASES = {
         'PASSWORD': os.getenv('DB_PASSWORD'),
         'HOST': os.getenv('DB_HOST', 'localhost'),
         'PORT': os.getenv('DB_PORT', '5432'),
+        # Keep connections open for up to 60 s so each request doesn't pay
+        # the ~5–10 ms cost of a fresh TCP + TLS handshake to the DB.
+        'CONN_MAX_AGE': int(os.getenv('DB_CONN_MAX_AGE', '60')),
+        # Drop stale connections (e.g. after a DB restart) rather than
+        # failing with a cryptic "server closed the connection" error.
+        'CONN_HEALTH_CHECKS': True,
     }
 }
 

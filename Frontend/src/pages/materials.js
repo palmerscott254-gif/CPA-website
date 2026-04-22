@@ -111,7 +111,7 @@ const Materials = () => {
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                   placeholder="Search by title or keyword"
-                  className="form-input pl-9"
+                  className="form-input pl-11"
                 />
               </div>
             </label>

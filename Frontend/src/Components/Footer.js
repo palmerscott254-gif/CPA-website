@@ -1,13 +1,35 @@
-import React from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { 
   BookOpen, 
   Mail, 
   Clock
 } from "lucide-react";
+import { AUTH_STATE_CHANGED } from "../utils/auth";
 
 const Footer = () => {
   const currentYear = new Date().getFullYear();
+  const [isLoggedIn, setIsLoggedIn] = useState(() => Boolean(localStorage.getItem("access_token")));
+
+  useEffect(() => {
+    const syncAuthState = () => {
+      setIsLoggedIn(Boolean(localStorage.getItem("access_token")));
+    };
+
+    const handleStorage = (event) => {
+      if (!event.key || event.key === "access_token" || event.key === "refresh_token") {
+        syncAuthState();
+      }
+    };
+
+    window.addEventListener(AUTH_STATE_CHANGED, syncAuthState);
+    window.addEventListener("storage", handleStorage);
+
+    return () => {
+      window.removeEventListener(AUTH_STATE_CHANGED, syncAuthState);
+      window.removeEventListener("storage", handleStorage);
+    };
+  }, []);
 
   const footerLinks = {
     platform: [
@@ -23,6 +45,13 @@ const Footer = () => {
       { name: "Register", path: "/register" },
     ]
   };
+
+  const companyLinks = useMemo(() => {
+    if (isLoggedIn) {
+      return footerLinks.company.filter((link) => link.name !== "Login" && link.name !== "Register");
+    }
+    return footerLinks.company;
+  }, [isLoggedIn]);
 
   return (
     <footer className="border-t border-slate-200 bg-white dark:border-slate-800 dark:bg-black">
@@ -57,7 +86,7 @@ const Footer = () => {
           <div>
             <h3 className="mb-3 text-sm font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">Company</h3>
             <ul className="space-y-2">
-              {footerLinks.company.map((link) => (
+              {companyLinks.map((link) => (
                 <li key={link.name}>
                   <Link
                     to={link.path}

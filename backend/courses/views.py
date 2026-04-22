@@ -3,12 +3,12 @@ from .models import Subject, Unit
 from .serializers import SubjectSerializer, UnitSerializer
 
 class SubjectListView(generics.ListAPIView):
-    queryset = Subject.objects.all()
+    queryset = Subject.objects.prefetch_related("units").all()
     serializer_class = SubjectSerializer
     permission_classes = [permissions.AllowAny]
 
 class UnitListView(generics.ListAPIView):
-    queryset = Unit.objects.all().order_by("order")
+    queryset = Unit.objects.select_related("subject").all().order_by("order")
     serializer_class = UnitSerializer
     permission_classes = [permissions.AllowAny]
     filter_backends = [filters.SearchFilter]

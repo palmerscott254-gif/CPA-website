@@ -35,12 +35,12 @@ class QuizRootView(APIView):
         })
 
 class QuestionSetListView(generics.ListAPIView):
-    queryset = QuestionSet.objects.all()
+    queryset = QuestionSet.objects.select_related("unit").prefetch_related("questions").all()
     serializer_class = QuestionSetSerializer
     permission_classes = [permissions.AllowAny]
 
 class QuestionSetDetailView(generics.RetrieveAPIView):
-    queryset = QuestionSet.objects.all()
+    queryset = QuestionSet.objects.select_related("unit").prefetch_related("questions").all()
     serializer_class = QuestionSetSerializer
     permission_classes = [permissions.AllowAny]
 

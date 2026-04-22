@@ -21,7 +21,7 @@ def google_id_token_login(request):
     # Verify id_token with Google
     google_client_id = settings.SOCIALACCOUNT_PROVIDERS['google']['APP']['client_id']
     token_info_url = f"https://oauth2.googleapis.com/tokeninfo?id_token={id_token}"
-    resp = requests.get(token_info_url)
+    resp = requests.get(token_info_url, timeout=5)
     if resp.status_code != 200:
         return Response({"detail": "Invalid Google token"}, status=400)
     token_info = resp.json()
@@ -155,7 +155,7 @@ class GoogleLogin(SocialLoginView):
             # Verify id_token with Google
             google_client_id = settings.SOCIALACCOUNT_PROVIDERS['google']['APP']['client_id']
             token_info_url = f"https://oauth2.googleapis.com/tokeninfo?id_token={id_token}"
-            resp = requests.get(token_info_url)
+            resp = requests.get(token_info_url, timeout=5)
             if resp.status_code != 200:
                 return Response({"detail": "Invalid Google token"}, status=400)
             token_info = resp.json()

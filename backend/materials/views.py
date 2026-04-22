@@ -5,18 +5,34 @@ from rest_framework.response import Response
 from rest_framework.parsers import MultiPartParser, FormParser
 from django.http import FileResponse, HttpResponseRedirect
 from rest_framework.decorators import api_view, permission_classes
+from django.core.exceptions import PermissionDenied
 from django.db.models import F, Q
 from django.conf import settings
 import os
 import logging
 import boto3
+from functools import lru_cache
+
+logger = logging.getLogger(__name__)
+
+
+@lru_cache(maxsize=1)
+def get_s3_client(region, access_key, secret_key):
+    from botocore.client import Config
+    return boto3.client(
+        's3',
+        region_name=region,
+        aws_access_key_id=access_key,
+        aws_secret_access_key=secret_key,
+        config=Config(signature_version='s3v4')
+    )
 
 class MaterialListView(generics.ListAPIView):
     serializer_class = MaterialSerializer
     permission_classes = [permissions.AllowAny]
 
     def get_queryset(self):
-        qs = Material.objects.filter(is_public=True).order_by("-download_count")
+        qs = Material.objects.select_related("unit", "uploaded_by").filter(is_public=True).order_by("-download_count")
         unit = self.request.query_params.get("unit")
         search = self.request.query_params.get("search")
         if unit:
@@ -64,9 +80,7 @@ class MaterialCreateView(generics.CreateAPIView):
 
 def generate_s3_presigned_url(file_name, expiration=3600):
     """Generate a presigned URL for S3 object download."""
-    logger = logging.getLogger(__name__)
     try:
-        from botocore.client import Config
         from botocore.exceptions import ClientError, NoCredentialsError
         
         # Validate inputs
@@ -89,13 +103,7 @@ def generate_s3_presigned_url(file_name, expiration=3600):
         
         logger.debug(f"Generating presigned URL for S3 key: {file_name} in bucket: {bucket}")
         
-        s3_client = boto3.client(
-            's3',
-            region_name=region,
-            aws_access_key_id=access_key,
-            aws_secret_access_key=secret_key,
-            config=Config(signature_version='s3v4')
-        )
+        s3_client = get_s3_client(region, access_key, secret_key)
         
         filename = os.path.basename(file_name)
         
@@ -134,10 +142,10 @@ class MaterialDetailView(generics.RetrieveDestroyAPIView):
     def get_queryset(self):
         user = self.request.user
         if user.is_authenticated and (user.is_staff or user.is_superuser):
-            return Material.objects.all()
+            return Material.objects.select_related("unit", "uploaded_by").all()
         if user.is_authenticated:
-            return Material.objects.filter(Q(is_public=True) | Q(uploaded_by=user))
-        return Material.objects.filter(is_public=True)
+            return Material.objects.select_related("unit", "uploaded_by").filter(Q(is_public=True) | Q(uploaded_by=user))
+        return Material.objects.select_related("unit", "uploaded_by").filter(is_public=True)
 
     def perform_destroy(self, instance):
         user = self.request.user

@@ -173,7 +173,11 @@ if USE_S3:
     AWS_S3_FILE_OVERWRITE = False          # Keep distinct versions if names collide
     AWS_DEFAULT_ACL = None                 # Private objects by default
     AWS_QUERYSTRING_AUTH = True            # Enable presigned (querystring) URLs
-    AWS_S3_CUSTOM_DOMAIN = os.getenv("AWS_S3_CUSTOM_DOMAIN")  # Optional CDN/CloudFront
+    raw_custom_domain = (os.getenv("AWS_S3_CUSTOM_DOMAIN") or "").strip()
+    if raw_custom_domain.lower() in {"", "none", "null"}:
+        AWS_S3_CUSTOM_DOMAIN = None
+    else:
+        AWS_S3_CUSTOM_DOMAIN = raw_custom_domain.replace("https://", "").replace("http://", "").rstrip("/")
     AWS_S3_OBJECT_PARAMETERS = { 'CacheControl': 'max-age=86400' }
 
     # Use django-storages S3 backend (Django 4.2+ STORAGES setting)

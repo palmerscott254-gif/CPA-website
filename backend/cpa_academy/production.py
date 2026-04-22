@@ -28,6 +28,11 @@ DATABASES = {
         'PASSWORD': os.getenv('DB_PASSWORD'),
         'HOST': os.getenv('DB_HOST', 'localhost'),
         'PORT': os.getenv('DB_PORT', '5432'),
+        # Reuse DB connections for up to 5 minutes instead of reconnecting on
+        # every request – especially valuable on Render free tier where cold
+        # starts already incur latency.  300 s is conservative enough to stay
+        # within the idle-connection timeout of most managed Postgres services.
+        'CONN_MAX_AGE': 300,
     }
 }
 

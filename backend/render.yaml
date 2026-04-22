@@ -11,7 +11,11 @@ services:
       pip install -r requirements.txt
       python manage.py collectstatic --no-input
       python manage.py migrate --no-input
-    startCommand: gunicorn cpa_academy.wsgi:application
+    startCommand: gunicorn cpa_academy.wsgi:application --config gunicorn.conf.py --bind 0.0.0.0:$PORT
+    # Render uses this path to determine whether the service is healthy.
+    # The endpoint is intentionally lightweight (no DB/S3 I/O) so it responds
+    # quickly even during warm-up.
+    healthCheckPath: /api/health/
     envVars:
       - key: DJANGO_SECRET_KEY
         generateValue: true
@@ -23,6 +27,4 @@ services:
         value: 3.11.0
       - key: DJANGO_SETTINGS_MODULE
         value: cpa_academy.settings
-
-
 

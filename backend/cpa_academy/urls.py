@@ -20,6 +20,15 @@ def api_root(request):
         }
     })
 
+def health_ping(request):
+    """Lightweight keep-alive endpoint for Render free-tier ping monitoring.
+
+    External uptime monitors (e.g. UptimeRobot, cron-job.org) should call
+    GET /api/health/ every 10-14 minutes to prevent the Render free-tier
+    service from spinning down and incurring a 30-60 s cold-start penalty.
+    """
+    return JsonResponse({"status": "ok"})
+
 def storage_health(request):
     try:
         storage_class = default_storage.__class__.__name__
@@ -41,6 +50,7 @@ urlpatterns = [
     path("api/subjects/", include("courses.urls")),
     path("api/materials/", include("materials.urls")),
     path("api/quizzes/", include("quizzes.urls")),
+    path("api/health/", health_ping, name="health_ping"),
     path("api/health/storage/", storage_health, name="storage_health"),
 ]
 

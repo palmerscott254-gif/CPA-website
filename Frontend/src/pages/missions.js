@@ -35,17 +35,19 @@ const Missions = () => {
       <section className="page-hero">
         <div className="container-modern section-padding">
           <div className="max-w-3xl">
-            <h1 className="section-title">Our mission</h1>
+            <p className="text-sm font-semibold uppercase tracking-wide text-primary-700 dark:text-primary-300">Mission</p>
+            <h1 className="section-title mt-2">Why CPA Academy exists</h1>
             <p className="section-subtitle">
-              CPA Academy exists to make CPA preparation clear, practical, and easier to sustain over time.
+              We make CPA preparation clear, practical, and sustainable for real schedules.
+              Learn in focused units, revise with materials, and test understanding with quizzes.
             </p>
-            <div className="mt-8 flex flex-wrap gap-3">
+            <div className="mt-7 flex flex-wrap gap-3">
               <Link to="/units" className="btn-primary">
-                Start with units
+                Explore units
                 <ArrowRight className="ml-2 h-4 w-4" />
               </Link>
               <Link to="/materials" className="btn-secondary">
-                Browse materials
+                View materials
               </Link>
             </div>
           </div>

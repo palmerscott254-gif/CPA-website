@@ -12,7 +12,7 @@ import {
   AlertCircle
 } from "lucide-react";
 import { fetchJSON } from "../api";
-import { googleLoginWithIdToken } from "../utils/auth";
+import { googleLoginWithIdToken, setAuthTokens } from "../utils/auth";
 import { GoogleLogin, GoogleOAuthProvider } from '@react-oauth/google';
 
 const Login = () => {
@@ -51,8 +51,7 @@ const Login = () => {
       });
 
       // Store tokens
-      localStorage.setItem("access_token", response.access);
-      localStorage.setItem("refresh_token", response.refresh);
+      setAuthTokens(response.access, response.refresh);
       
       setSuccess(true);
       
@@ -289,8 +288,7 @@ const Login = () => {
                     setError("");
                     try {
                       const result = await googleLoginWithIdToken(credentialResponse.credential);
-                      localStorage.setItem("access_token", result.access);
-                      localStorage.setItem("refresh_token", result.refresh);
+                      setAuthTokens(result.access, result.refresh);
                       setSuccess(true);
                       setTimeout(() => navigate("/"), 1500);
                     } catch (err) {

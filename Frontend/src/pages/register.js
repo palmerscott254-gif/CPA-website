@@ -13,7 +13,7 @@ import {
   Check
 } from "lucide-react";
 import { fetchJSON } from "../api";
-import { googleLoginWithIdToken } from "../utils/auth";
+import { googleLoginWithIdToken, setAuthTokens } from "../utils/auth";
 import { GoogleLogin, GoogleOAuthProvider } from '@react-oauth/google';
 
 const Register = () => {
@@ -75,8 +75,7 @@ const Register = () => {
 
       // If backend returns tokens, store them and redirect to home.
       if (response?.access) {
-        localStorage.setItem("access_token", response.access);
-        if (response.refresh) localStorage.setItem("refresh_token", response.refresh);
+        setAuthTokens(response.access, response.refresh);
       }
 
       setSuccess(true);
@@ -391,8 +390,7 @@ const Register = () => {
                     try {
                       const result = await googleLoginWithIdToken(credentialResponse.credential);
                       if (result?.access) {
-                        localStorage.setItem("access_token", result.access);
-                        if (result.refresh) localStorage.setItem("refresh_token", result.refresh);
+                        setAuthTokens(result.access, result.refresh);
                       }
                       setSuccess(true);
                       setTimeout(() => {

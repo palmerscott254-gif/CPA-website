@@ -19,6 +19,7 @@ import {
 import { useTheme } from "../contexts/ThemeContext";
 import { fetchJSON } from "../api";
 import { logger } from "../utils/logger";
+import { AUTH_STATE_CHANGED, clearAuthTokens } from "../utils/auth";
 
 const NavBar = () => {
   const [user, setUser] = useState(null);
@@ -30,13 +31,35 @@ const NavBar = () => {
   const location = useLocation();
   const { toggleTheme, isDark } = useTheme();
 
-  useEffect(() => {
+  const syncAuthState = () => {
     const token = localStorage.getItem("access_token");
     if (token) {
       setIsLoggedIn(true);
-      // Try to get user info
       fetchUserInfo();
+      return;
     }
+
+    setIsLoggedIn(false);
+    setUser(null);
+  };
+
+  useEffect(() => {
+    syncAuthState();
+
+    const handleAuthStateChanged = () => syncAuthState();
+    const handleStorage = (event) => {
+      if (!event.key || event.key === "access_token" || event.key === "refresh_token") {
+        syncAuthState();
+      }
+    };
+
+    window.addEventListener(AUTH_STATE_CHANGED, handleAuthStateChanged);
+    window.addEventListener("storage", handleStorage);
+
+    return () => {
+      window.removeEventListener(AUTH_STATE_CHANGED, handleAuthStateChanged);
+      window.removeEventListener("storage", handleStorage);
+    };
   }, []);
 
   useEffect(() => {
@@ -57,8 +80,7 @@ const NavBar = () => {
   };
 
   const handleLogout = () => {
-    localStorage.removeItem("access_token");
-    localStorage.removeItem("refresh_token");
+    clearAuthTokens();
     setIsLoggedIn(false);
     setUser(null);
     setIsUserMenuOpen(false);

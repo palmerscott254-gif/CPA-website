@@ -1,4 +1,5 @@
 import { logger } from './utils/logger';
+import { clearAuthTokens, setAuthTokens } from './utils/auth';
 
 // Determine API base URL:
 // Priority: REACT_APP_API_BASE env var -> production mapping -> localhost dev
@@ -49,12 +50,11 @@ export class ApiClient {
       }
 
       const data = await response.json();
-      localStorage.setItem("access_token", data.access);
+      setAuthTokens(data.access, refreshToken);
       return data.access;
     } catch (error) {
       // Clear tokens on refresh failure
-      localStorage.removeItem("access_token");
-      localStorage.removeItem("refresh_token");
+      clearAuthTokens();
       throw error;
     }
   }

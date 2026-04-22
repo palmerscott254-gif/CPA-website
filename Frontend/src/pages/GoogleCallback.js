@@ -21,12 +21,13 @@ const GoogleCallback = () => {
 
       if (code) {
         try {
+          const returnUrl = localStorage.getItem('returnUrl') || '/';
           // Exchange the authorization code for tokens
           // The backend will handle the actual token exchange with Google
           // and then log in the user, returning JWTs.
-          await exchangeGoogleToken(code); // Assuming exchangeGoogleToken handles the backend call and token storage
-          navigate(localStorage.getItem('returnUrl') || '/');
+          await exchangeGoogleToken(code);
           localStorage.removeItem('returnUrl');
+          navigate(returnUrl);
         } catch (err) {
           logger.error('Error exchanging Google code:', err);
           navigate('/login?error=google_login_failed');

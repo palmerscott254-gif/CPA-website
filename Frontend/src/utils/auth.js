@@ -1,6 +1,34 @@
 // src/utils/auth.js
 import logger from './logger';
 
+export const AUTH_STATE_CHANGED = 'auth-state-changed';
+
+const emitAuthStateChanged = () => {
+  if (typeof window !== 'undefined') {
+    window.dispatchEvent(new CustomEvent(AUTH_STATE_CHANGED));
+  }
+};
+
+export const setAuthTokens = (accessToken, refreshToken) => {
+  if (accessToken) {
+    localStorage.setItem('access_token', accessToken);
+  } else {
+    localStorage.removeItem('access_token');
+  }
+
+  if (refreshToken) {
+    localStorage.setItem('refresh_token', refreshToken);
+  }
+
+  emitAuthStateChanged();
+};
+
+export const clearAuthTokens = () => {
+  localStorage.removeItem('access_token');
+  localStorage.removeItem('refresh_token');
+  emitAuthStateChanged();
+};
+
 const getApiBase = () => {
   return process.env.REACT_APP_API_BASE ||
     (typeof window !== 'undefined' && window.location.hostname === 'cpa-website-1.onrender.com'
@@ -42,6 +70,9 @@ export const exchangeGoogleToken = async (code) => {
     });
     const data = await res.json();
     if (!res.ok) throw data;
+    if (data?.access) {
+      setAuthTokens(data.access, data.refresh);
+    }
     return data;
   } catch (err) {
     logger.error('Exchange Google code failed', err);

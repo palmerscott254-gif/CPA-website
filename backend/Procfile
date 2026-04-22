@@ -1,4 +1,6 @@
-web: gunicorn cpa_academy.wsgi:application --bind 0.0.0.0:$PORT
-
-
-
+# --preload    : load Django once before forking workers (faster first request, lower RAM)
+# --workers 1  : single worker fits Render free tier (512 MB RAM); avoids fork overhead
+# --threads 4  : handle concurrent requests within the worker without extra processes
+# --timeout 120: give slow Render cold-start connections time to complete
+# --worker-class gthread: thread-based worker pairs well with --threads
+web: gunicorn cpa_academy.wsgi:application --bind 0.0.0.0:$PORT --preload --workers 1 --threads 4 --worker-class gthread --timeout 120

@@ -206,6 +206,17 @@ else:
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
+# In-memory cache: keeps frequently read public data (e.g. subjects list) in RAM
+# so repeated requests are served instantly without hitting the database.
+# LocMemCache is process-local, zero-dependency, and survives across requests
+# within the same gunicorn worker — ideal for Render's free tier single-worker setup.
+CACHES = {
+    "default": {
+        "BACKEND": "django.core.cache.backends.locmem.LocMemCache",
+        "LOCATION": "cpa-academy-cache",
+    }
+}
+
 AUTH_USER_MODEL = "users.User"
 
 REST_FRAMEWORK = {

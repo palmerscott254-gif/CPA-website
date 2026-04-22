@@ -2,7 +2,6 @@ from django.contrib import admin
 from django.urls import path, include
 from django.conf import settings
 from django.http import JsonResponse
-from django.core.files.storage import default_storage
 
 # Import admin configuration to apply custom headers and titles
 from . import custom_admin
@@ -20,7 +19,16 @@ def api_root(request):
         }
     })
 
+def warmup(request):
+    """Lightweight warmup endpoint for Render free-tier keep-alive pings.
+    Returns instantly without touching the database or heavy resources.
+    Use this URL with an external cron/UptimeRobot pinger to prevent cold starts.
+    """
+    return JsonResponse({"status": "ok"})
+
 def storage_health(request):
+    # Import lazily so module-level import cost is avoided at startup
+    from django.core.files.storage import default_storage
     try:
         storage_class = default_storage.__class__.__name__
         return JsonResponse({
@@ -34,6 +42,8 @@ def storage_health(request):
 
 urlpatterns = [
     path("", api_root, name="api_root"),
+    # Warmup endpoint — hits this URL to wake the dyno before users arrive
+    path("warmup/", warmup, name="warmup"),
     path("admin/", admin.site.urls),
     path("api/auth/", include("users.urls")),
     path("api/auth/", include("dj_rest_auth.urls")),

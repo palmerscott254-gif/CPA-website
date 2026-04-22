@@ -11,7 +11,7 @@ services:
       pip install -r requirements.txt
       python manage.py collectstatic --no-input
       python manage.py migrate --no-input
-    startCommand: gunicorn cpa_academy.wsgi:application
+    startCommand: gunicorn cpa_academy.wsgi:application --preload --workers 1 --threads 4 --worker-class gthread --timeout 120
     envVars:
       - key: DJANGO_SECRET_KEY
         generateValue: true

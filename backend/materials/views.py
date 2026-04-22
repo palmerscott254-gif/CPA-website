@@ -9,7 +9,7 @@ from django.db.models import F, Q
 from django.conf import settings
 import os
 import logging
-import boto3
+# boto3 is imported lazily inside generate_s3_presigned_url to avoid slow import at startup
 
 class MaterialListView(generics.ListAPIView):
     serializer_class = MaterialSerializer
@@ -66,6 +66,7 @@ def generate_s3_presigned_url(file_name, expiration=3600):
     """Generate a presigned URL for S3 object download."""
     logger = logging.getLogger(__name__)
     try:
+        import boto3  # lazy import — avoids slow boto3 load at startup
         from botocore.client import Config
         from botocore.exceptions import ClientError, NoCredentialsError
         

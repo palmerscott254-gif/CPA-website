@@ -5,8 +5,11 @@ from .models import Subject, Unit
 from .serializers import SubjectSerializer, UnitSerializer
 
 # Cache TTL in seconds (5 minutes).  Subjects change rarely; this prevents
-# a cold-start DB hit on every request to the most-visited public endpoint.
+# a DB round-trip on every request to the most-visited public endpoint.
 _SUBJECTS_CACHE_TTL = 300
+# Increment the version suffix whenever SubjectSerializer or the Subject model
+# changes in a way that alters the serialized output, so stale cache entries
+# are automatically bypassed on the next deploy.
 _SUBJECTS_CACHE_KEY = "subjects_list_v1"
 
 
@@ -16,13 +19,17 @@ class SubjectListView(generics.ListAPIView):
     permission_classes = [permissions.AllowAny]
 
     def list(self, request, *args, **kwargs):
-        # Return cached serialized data when available to avoid a DB round-trip
-        cached = cache.get(_SUBJECTS_CACHE_KEY)
-        if cached is not None:
-            return Response(cached)
-        response = super().list(request, *args, **kwargs)
-        cache.set(_SUBJECTS_CACHE_KEY, response.data, _SUBJECTS_CACHE_TTL)
-        return response
+        # Only serve cached data for unfiltered/unpaginated requests so that
+        # query-param variations (e.g. ?page=2) never receive a mismatched
+        # cached response.
+        if not request.query_params:
+            cached = cache.get(_SUBJECTS_CACHE_KEY)
+            if cached is not None:
+                return Response(cached)
+            response = super().list(request, *args, **kwargs)
+            cache.set(_SUBJECTS_CACHE_KEY, response.data, _SUBJECTS_CACHE_TTL)
+            return response
+        return super().list(request, *args, **kwargs)
 
 class UnitListView(generics.ListAPIView):
     queryset = Unit.objects.all().order_by("order")
